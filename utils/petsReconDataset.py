@@ -10,7 +10,7 @@ from PIL import Image, ImageOps
 from torch.nn.functional import one_hot
 
 
-class PetsDataset(Dataset):
+class PetsReconDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix=''):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
@@ -130,7 +130,7 @@ class PetsDataset(Dataset):
         }
 
 
-class CarvanaDataset(PetsDataset):
+class CarvanaDataset(PetsReconDataset):
     def __init__(self, imgs_dir, masks_dir, scale=1):
         # super().__init__(imgs_dir, masks_dir, scale, mask_suffix='_mask')
         super().__init__(imgs_dir, masks_dir, scale, mask_suffix='')
