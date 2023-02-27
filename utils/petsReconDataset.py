@@ -126,7 +126,7 @@ class PetsReconDataset(Dataset):
 
         return {
             'image': torch.from_numpy(img).type(torch.FloatTensor),
-            'mask': torch.from_numpy(mask).type(torch.FloatTensor)
+            'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor)
         }
 
 

@@ -10,7 +10,7 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 
-from eval import eval_net
+from eval_recon import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
@@ -58,7 +58,7 @@ def train_net(net,
     optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     if net.n_classes > 1:
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.L1Loss()
     else:
         criterion = nn.BCEWithLogitsLoss()
 
@@ -69,7 +69,7 @@ def train_net(net,
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
                 imgs = batch['image']
-                true_masks = batch['mask']
+                true_masks = batch['reconstructed_image']
                 assert imgs.shape[1] == net.n_channels, \
                     f'Network has been defined with {net.n_channels} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
