@@ -10,7 +10,7 @@ from torchvision import transforms
 
 from unet import UNet
 from utils.data_vis import plot_img_and_mask
-from utils.petsDataset import PetsDataset
+from utils.petsReconDataset import PetsReconDataset
 
 
 def predict_img(net,
@@ -20,7 +20,7 @@ def predict_img(net,
                 out_threshold=0.5):
     net.eval()
 
-    img = torch.from_numpy(PetsDataset.preprocess(full_img, scale_factor))
+    img = torch.from_numpy(PetsReconDataset.preprocess(full_img, scale_factor, isImage=True))
 
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
@@ -28,12 +28,14 @@ def predict_img(net,
     with torch.no_grad():
         output = net(img)
 
-        if net.n_classes > 1:
-            probs = F.softmax(output, dim=1)
-        else:
-            probs = torch.sigmoid(output)
+        print(output.shape)
 
-        probs = probs.squeeze(0)
+        # if net.n_classes > 1:
+        #     probs = F.softmax(output, dim=1)
+        # else:
+        #     probs = torch.sigmoid(output)
+
+        probs = output.squeeze(0)
 
         tf = transforms.Compose(
             [
@@ -46,7 +48,7 @@ def predict_img(net,
         probs = tf(probs.cpu())
         full_mask = probs.squeeze().cpu().numpy()
 
-    return full_mask > out_threshold
+    return full_mask
 
 
 def get_args():
