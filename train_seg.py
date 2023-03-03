@@ -17,7 +17,8 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.petsDataset import PetsDataset
 from torch.utils.data import DataLoader, random_split
 
-root_dir = Path().resolve().parent
+root_dir = Path(__file__).resolve().parent.parent
+print('root_dir', root_dir)
 dir_img = os.path.join(root_dir, 'data/images/')
 print(dir_img)
 dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')

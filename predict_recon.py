@@ -95,6 +95,9 @@ def get_output_filenames(args):
     return out_files
 
 
+# def mask_to_image(mask):
+#     return Image.fromarray((mask * 255).astype(np.uint8))
+
 def mask_to_image(mask):
     return Image.fromarray((mask * 255).astype(np.uint8))
 
@@ -126,7 +129,7 @@ if __name__ == "__main__":
                            out_threshold=args.mask_threshold,
                            device=device)
 
-        print(type(mask))
+        # print(type(mask))
         mask = np.argmax(mask, axis = 0)
         if not args.no_save:
             out_fn = out_files[i]
