@@ -8,4 +8,3 @@ SUBMISSION*
 venv/
 runs/
 models_all/
-dice_loss.py
