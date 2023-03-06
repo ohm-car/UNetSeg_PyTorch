@@ -28,7 +28,7 @@ def predict_img(net,
     with torch.no_grad():
         output = net(img)
 
-        print(output.shape)
+        # print(output.shape)
 
         # if net.n_classes > 1:
         #     probs = F.softmax(output, dim=1)
@@ -85,6 +85,7 @@ def get_output_filenames(args):
     if not args.output:
         for f in in_files:
             pathsplit = os.path.splitext(f)
+            # print(pathsplit)
             out_files.append("{}_OUT{}".format(pathsplit[0], pathsplit[1]))
     elif len(in_files) != len(args.output):
         logging.error("Input files and output files are not of the same length")
@@ -99,7 +100,11 @@ def get_output_filenames(args):
 #     return Image.fromarray((mask * 255).astype(np.uint8))
 
 def mask_to_image(mask):
-    return Image.fromarray((mask * 255).astype(np.uint8))
+    
+    # print(mask, mask * 255)
+    mask = mask.transpose((1,2,0))
+    # print(mask.shape)
+    return Image.fromarray((mask * 255).astype(np.uint8), 'RGB')
 
 
 if __name__ == "__main__":
@@ -129,8 +134,9 @@ if __name__ == "__main__":
                            out_threshold=args.mask_threshold,
                            device=device)
 
-        # print(type(mask))
-        mask = np.argmax(mask, axis = 0)
+        # print(type(mask), mask.shape)
+        # mask = np.argmax(mask, axis = 0)
+        print(mask.shape)
         if not args.no_save:
             out_fn = out_files[i]
             result = mask_to_image(mask)
