@@ -9,6 +9,7 @@ import PIL
 from PIL import Image, ImageOps
 from torch.nn.functional import one_hot
 
+"""A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class PetsReconDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix=''):
@@ -25,25 +26,6 @@ class PetsReconDataset(Dataset):
     def __len__(self):
         return len(self.ids)
 
-    # @classmethod
-    # def preprocess(cls, pil_img, scale, isImage):
-    #     w, h = pil_img.size
-    #     newW, newH = int(scale * w), int(scale * h)
-    #     assert newW > 0 and newH > 0, 'Scale is too small'
-    #     pil_img = pil_img.resize((160, 160))
-
-    #     img_nd = np.array(pil_img)
-
-    #     if len(img_nd.shape) == 2:
-    #         img_nd = np.expand_dims(img_nd, axis=2)
-
-    #     # HWC to CHW
-    #     img_trans = img_nd.transpose((2, 0, 1))
-    #     if isImage:
-    #         if img_trans.max() > 1:
-    #             img_trans = img_trans / 255
-
-    #     return img_trans
 
     @classmethod
     def preprocess(cls, pil_img, scale, isImage):
@@ -84,16 +66,16 @@ class PetsReconDataset(Dataset):
 
     #     return Image.fromarray(np.uint8(mask))
 
-    def all_idx(self, idx, axis):
-        grid = np.ogrid[tuple(map(slice, idx.shape))]
-        grid.insert(axis, idx)
-        return tuple(grid)
+    # def all_idx(self, idx, axis):
+    #     grid = np.ogrid[tuple(map(slice, idx.shape))]
+    #     grid.insert(axis, idx)
+    #     return tuple(grid)
 
-    def onehot_initialization(self, a):
-        ncols = a.max()+1
-        out = np.zeros(a.shape + (ncols,), dtype=int)
-        out[self.all_idx(a, axis=2)] = 1
-        return out
+    # def onehot_initialization(self, a):
+    #     ncols = a.max()+1
+    #     out = np.zeros(a.shape + (ncols,), dtype=int)
+    #     out[self.all_idx(a, axis=2)] = 1
+    #     return out
 
     def __getitem__(self, i):
         idx = self.ids[i]

@@ -55,8 +55,8 @@ def train_net(net,
         Images scaling:  {img_scale}
     ''')
 
-    optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
+    optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     if net.n_classes > 1:
         criterion = nn.L1Loss()
     else:
@@ -69,20 +69,20 @@ def train_net(net,
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
                 imgs = batch['image']
-                true_masks = batch['reconstructed_image']
+                recon_image = batch['reconstructed_image']
                 assert imgs.shape[1] == net.n_channels, \
                     f'Network has been defined with {net.n_channels} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                mask_type = torch.float32 #if net.n_classes == 1 else torch.long
-                true_masks = true_masks.to(device=device, dtype=mask_type)
+                recon_image_type = torch.float32 #if net.n_classes == 1 else torch.long
+                recon_image = recon_image.to(device=device, dtype=recon_image_type)
 
-                masks_pred = net(imgs)
-                # masks_pred = torch.argmax(masks_pred, dim=1)
-                # print("Masks Pred shape:", masks_pred.shape, "True Masks shape:", true_masks.shape)
-                loss = criterion(masks_pred, true_masks)
+                pred_image = net(imgs)
+                # pred_image = torch.argmax(pred_image, dim=1)
+                # print("Masks Pred shape:", pred_image.shape, "True Masks shape:", recon_image.shape)
+                loss = criterion(pred_image, recon_image)
                 epoch_loss += loss.item()
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
@@ -102,7 +102,7 @@ def train_net(net,
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
                     val_score = eval_net(net, val_loader, device)
-                    scheduler.step(val_score)
+                    # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     if net.n_classes > 1:
@@ -114,8 +114,8 @@ def train_net(net,
 
                     writer.add_images('images', imgs, global_step)
                     if net.n_classes == 1:
-                        writer.add_images('masks/true', true_masks, global_step)
-                        writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
+                        writer.add_images('masks/true', recon_image, global_step)
+                        writer.add_images('masks/pred', torch.sigmoid(pred_image) > 0.5, global_step)
 
         if save_cp:
             try:
