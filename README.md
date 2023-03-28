@@ -6,10 +6,10 @@
 ![input and output for a random image in the test dataset](https://framapic.org/OcE8HlU6me61/KNTt8GFQzxDR.png)
 
 
-Customized implementation of the [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch for Kaggle's [Carvana Image Masking Challenge](https://www.kaggle.com/c/carvana-image-masking-challenge) from high definition images.
+Customized implementation of the [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch
 
 ## Usage
-**Note : Use Python 3.6 or newer**
+**Note : Use Python 3.9 or newer**
 ### Prediction
 
 After training your model and saving it to MODEL.pth, you can easily test the output masks on your images via the CLI.
@@ -77,13 +77,9 @@ By default, the `scale` is 0.5, so if you wish to obtain better results (but use
 
 The input images and target masks should be in the `data/imgs` and `data/masks` folders respectively.
 
-### Pretrained model
-A [pretrained model](https://github.com/milesial/Pytorch-UNet/releases/tag/v1.0) is available for the Carvana dataset. It can also be loaded from torch.hub:
-
 ```python
 net = torch.hub.load('milesial/Pytorch-UNet', 'unet_carvana')
 ```
-The training was done with a 100% scale and bilinear upsampling.
 
 ## Tensorboard
 You can visualize in real time the train and test losses, the weights and gradients, along with the model predictions with tensorboard:
