@@ -14,7 +14,8 @@ from eval_recon import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-from utils.petsReconDataset import PetsReconDataset
+from utils.petsReconDataset_multiloss import PetsReconDataset
+from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
 root_dir = Path().resolve().parent
@@ -55,8 +56,9 @@ def train_net(net,
         Images scaling:  {img_scale}
     ''')
 
-    optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
+    # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+    optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
+    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     if net.n_classes > 1:
         criterion = nn.L1Loss()
     else:
@@ -69,7 +71,8 @@ def train_net(net,
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
                 imgs = batch['image']
-                true_masks = batch['reconstructed_image']
+                recon_img = batch['reconstructed_image']
+                pcImg = batch['mask_perc']
                 assert imgs.shape[1] == net.n_channels, \
                     f'Network has been defined with {net.n_channels} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
@@ -77,19 +80,24 @@ def train_net(net,
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 mask_type = torch.float32 if net.n_classes == 1 else torch.long
-                true_masks = true_masks.to(device=device, dtype=mask_type)
+                recon_img = recon_img.to(device=device, dtype=mask_type)
+                pcImg = pcImg.to(device=device, dtype=torch.float32)
 
-                masks_pred = net(imgs)
+                masks_pred, pcPred = net(imgs)
                 # masks_pred = torch.argmax(masks_pred, dim=1)
-                # print("Masks Pred shape:", masks_pred.shape, "True Masks shape:", true_masks.shape)
-                loss = criterion(masks_pred, true_masks)
-                epoch_loss += loss.item()
+                # print("Masks Pred shape:", masks_pred.shape, "True Masks shape:", recon_img.shape)
+                pcLossCriterion = percLoss(threshold_prob = 0.9)
+
+                loss = criterion(masks_pred, recon_img)
+                pcLoss = pcLossCriterion(pcPred, pcImg)
+                epoch_loss += (loss.item() + pcLoss.item())
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
                 pbar.set_postfix(**{'loss (batch)': loss.item()})
 
                 optimizer.zero_grad()
                 loss.backward()
+                pcLoss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
@@ -114,7 +122,7 @@ def train_net(net,
 
                     writer.add_images('images', imgs, global_step)
                     if net.n_classes == 1:
-                        writer.add_images('masks/true', true_masks, global_step)
+                        writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
 
         if save_cp:
@@ -161,7 +169,7 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=3, bilinear=True)
+    net = UNet(n_channels=3, n_classes=1, bilinear=True)
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
