@@ -87,17 +87,19 @@ def train_net(net,
                 # masks_pred = torch.argmax(masks_pred, dim=1)
                 # print("Masks Pred shape:", masks_pred.shape, "True Masks shape:", recon_img.shape)
                 pcLossCriterion = percLoss(threshold_prob = 0.9)
+                # pcLossCriterion = nn.L1Loss()
 
                 loss = criterion(masks_pred, recon_img)
                 pcLoss = pcLossCriterion(pcPred, pcImg)
+                total_loss = pcLoss + loss
                 epoch_loss += (loss.item() + pcLoss.item())
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
                 pbar.set_postfix(**{'loss (batch)': loss.item()})
 
                 optimizer.zero_grad()
-                loss.backward()
-                pcLoss.backward()
+                total_loss.backward()
+                # pcLoss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 

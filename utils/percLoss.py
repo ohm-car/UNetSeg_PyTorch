@@ -13,17 +13,21 @@ class percLoss(nn.Module):
         # self.beta = beta
         # self.sim = F.cosine_similarity()
 
-    def forward(self, target, inputs):
+    def forward(self, pred_mask, target):
 
         #Compute percentage and compare
 
-        temp = target
+        #target: Value between 0 and 1, obtained from CSV
+        #pred_mask: A tensor with the shape of the image, and channels equal to number of classes. For now 1 channel.
+
+        # temp = pred_mask
         # print(temp)
-        temp2 = (temp > self.threshold_prob) * 1
+        # temp2 = (temp > self.threshold_prob) * 1
+        pred_perc = torch.mean(pred_mask)
         # print(temp2)
-        perc = torch.sum(temp2)/torch.numel(temp2)
+        # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)
         l1loss = nn.L1Loss()
-        loss = l1loss(inputs, perc)
+        loss = l1loss(pred_perc, target)
 
         return loss
