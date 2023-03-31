@@ -90,12 +90,14 @@ def train_net(net,
                 # pcLossCriterion = nn.L1Loss()
 
                 loss = criterion(masks_pred, recon_img)
+                print(torch.squeeze(pcPred).shape)
+                print(torch.mean(pcPred, 1).shape, pcImg)
                 pcLoss = pcLossCriterion(pcPred, pcImg)
                 total_loss = pcLoss + loss
                 epoch_loss += (loss.item() + pcLoss.item())
-                writer.add_scalar('Loss/train', loss.item(), global_step)
+                writer.add_scalar('Loss/train', total_loss.item(), global_step)
 
-                pbar.set_postfix(**{'loss (batch)': loss.item()})
+                pbar.set_postfix(**{'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
                 total_loss.backward()
