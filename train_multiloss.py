@@ -11,7 +11,7 @@ from torch import optim
 from tqdm import tqdm
 import torchsummary
 
-from eval_recon import eval_net
+from eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
@@ -115,7 +115,7 @@ def train_net(net,
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
                     val_score = eval_net(net, val_loader, device)
-                    scheduler.step(val_score)
+                    # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     if net.n_classes > 1:
