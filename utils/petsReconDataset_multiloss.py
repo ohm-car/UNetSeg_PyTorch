@@ -8,7 +8,6 @@ import logging
 import PIL
 from PIL import Image, ImageOps
 from torch.nn.functional import one_hot
-import pandas as pd
 import csv
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
