@@ -136,9 +136,10 @@ def train_net(net,
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
-            torch.save(net.state_dict(),
-                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
-            logging.info(f'Checkpoint {epoch + 1} saved !')
+            if (epoch + 1) % 5 == 0:
+                torch.save(net.state_dict(),
+                           dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+                logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
 
