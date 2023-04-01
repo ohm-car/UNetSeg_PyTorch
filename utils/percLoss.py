@@ -23,8 +23,9 @@ class percLoss(nn.Module):
         # temp = pred_mask
         # print(temp)
         # temp2 = (temp > self.threshold_prob) * 1
-        pred_perc = torch.mean(pred_mask)
-        print(pred_perc.shape)
+        # print(pred_mask.shape)
+        pred_perc = torch.mean(torch.squeeze(pred_mask), (1,2))
+        pred_perc = torch.unsqueeze(pred_perc, 1)
         # print(temp2)
         # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)

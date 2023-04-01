@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
+import torchsummary
 
 from eval_recon import eval_net
 from unet import UNet
@@ -90,11 +91,11 @@ def train_net(net,
                 # pcLossCriterion = nn.L1Loss()
 
                 loss = criterion(masks_pred, recon_img)
-                print(torch.squeeze(pcPred).shape)
-                print(torch.mean(pcPred, 1).shape, pcImg)
+                # print(torch.squeeze(pcPred).shape)
+                # print(torch.mean(torch.squeeze(pcPred), (1,2)).shape, pcImg)
                 pcLoss = pcLossCriterion(pcPred, pcImg)
-                total_loss = pcLoss + loss
-                epoch_loss += (loss.item() + pcLoss.item())
+                total_loss = loss + pcLoss
+                epoch_loss += loss.item() + pcLoss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
 
                 pbar.set_postfix(**{'total loss (batch)': total_loss.item()})
@@ -147,7 +148,7 @@ def get_args():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-e', '--epochs', metavar='E', type=int, default=5,
                         help='Number of epochs', dest='epochs')
-    parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=1,
+    parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=2,
                         help='Batch size', dest='batchsize')
     parser.add_argument('-l', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.0001,
                         help='Learning rate', dest='lr')
@@ -186,6 +187,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
+    torchsummary.summary(net, input_size=(3, 160, 160))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
