@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.nn.functional import one_hot
 from torch import optim
 from tqdm import tqdm
 
@@ -77,13 +78,15 @@ def train_net(net,
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                mask_type = torch.float32 #if net.n_classes == 1 else torch.long
+                mask_type = torch.float32  #if net.n_classes == 1 else torch.long
                 true_masks = true_masks.to(device=device, dtype=mask_type)
 
                 masks_pred = net(imgs)
-                # masks_pred = torch.argmax(masks_pred, dim=0)
+                # masks_pred = one_hot(torch.argmax(masks_pred, dim=1), num_classes = net.n_classes)
                 # print("Masks Pred shape:", masks_pred.shape, masks_pred.dtype, "True Masks shape:", true_masks.shape, true_masks.dtype)
+                # print("Masks Pred example:", masks_pred[0])
                 loss = criterion(masks_pred, true_masks)
+                # loss = criterion(true_masks, masks_pred)
                 epoch_loss += loss.item()
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
