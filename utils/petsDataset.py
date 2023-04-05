@@ -55,7 +55,9 @@ class PetsDataset(Dataset):
         img_nd = np.array(pil_img)
 
         if len(img_nd.shape) == 2:
+            # print(img_nd.shape)
             img_nd -= 1
+            img_nd = np.array(one_hot(torch.tensor(img_nd, dtype=torch.long), num_classes = 3))
             # img_nd = np.expand_dims(img_nd, axis=2)
 
         # if not isImage:
@@ -66,12 +68,10 @@ class PetsDataset(Dataset):
 
         # HWC to CHW
         
+        img_trans = img_nd.transpose((2, 0, 1))
+        
         if isImage:
-            img_trans = img_nd.transpose((2, 0, 1))
-            if img_trans.max() > 1:
-                img_trans = img_trans / 255
-        else:
-            img_trans = img_nd
+            img_trans = img_trans / 255
 
         return img_trans
 
@@ -108,6 +108,8 @@ class PetsDataset(Dataset):
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {idx}: {img_file}'
         mask = Image.open(mask_file[0])
+        assert mask.mode == 'L' or mask.mode == '1', \
+            f'Error with file {mask_file}'
         # print(mask.size, mask.mode)
         # mask = self.processMask(mask)
         img = Image.open(img_file[0])
