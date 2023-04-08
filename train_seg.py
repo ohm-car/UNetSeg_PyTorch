@@ -100,7 +100,7 @@ def train_net(net,
                 pbar.update(imgs.shape[0])
                 global_step += 1
                 # print(global_step, n_train, batch_size)
-                if global_step % (n_train // (1 * batch_size)) == 0:
+                if global_step % (n_train // (1 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -127,9 +127,10 @@ def train_net(net,
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
-            torch.save(net.state_dict(),
-                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
-            logging.info(f'Checkpoint {epoch + 1} saved !')
+            if (epoch + 1) % 5 == 0:
+                torch.save(net.state_dict(),
+                           dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+                logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
 
