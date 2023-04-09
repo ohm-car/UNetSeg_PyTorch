@@ -10,6 +10,8 @@ import torch.nn as nn
 from torch.nn.functional import one_hot
 from torch import optim
 from tqdm import tqdm
+import torchsummary
+import datetime
 
 from eval_seg import eval_net
 from unet import UNet
@@ -24,7 +26,9 @@ dir_img = os.path.join(root_dir, 'data/images/')
 print(dir_img)
 dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
 print(dir_mask)
-dir_checkpoint = 'checkpoints/segmentation/'
+tm = datetime.datetime.now()
+dir_checkpoint = 'checkpoints/segmentation/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+print(dir_checkpoint)
 
 
 def train_net(net,
@@ -123,7 +127,7 @@ def train_net(net,
 
         if save_cp:
             try:
-                os.mkdir(dir_checkpoint)
+                os.makedirs(dir_checkpoint)
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
@@ -185,6 +189,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
+    torchsummary.summary(net, input_size=(3, 160, 160))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
