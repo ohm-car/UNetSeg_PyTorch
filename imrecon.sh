@@ -14,4 +14,4 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 
 source activate unet
 
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_seg.py -b=96 -e=200
+python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_seg.py -b=24 -e=200
