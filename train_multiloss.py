@@ -10,6 +10,7 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 import torchsummary
+import datetime
 
 from eval_multiloss import eval_net
 from unet import UNet
@@ -24,7 +25,8 @@ dir_img = os.path.join(root_dir, 'data/images/')
 print(dir_img)
 dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
 print(dir_mask)
-dir_checkpoint = 'checkpoints/'
+tm = datetime.datetime.now()
+dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
 
 def train_net(net,
@@ -109,7 +111,7 @@ def train_net(net,
                 pbar.update(imgs.shape[0])
                 global_step += 1
                 # print(global_step, n_train, batch_size)
-                if global_step % (n_train // (1 * batch_size)) == 0:
+                if global_step % (n_train // (1 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -132,7 +134,7 @@ def train_net(net,
 
         if save_cp:
             try:
-                os.mkdir(dir_checkpoint)
+                os.makedirs(dir_checkpoint)
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
