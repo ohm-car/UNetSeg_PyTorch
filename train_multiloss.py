@@ -98,7 +98,7 @@ def train_net(net,
                 epoch_loss += loss.item() + pcLoss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
 
-                pbar.set_postfix(**{'total loss (batch)': total_loss.item()})
+                pbar.set_postfix(**{'percLoss (batch)': pcLoss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
                 total_loss.backward()
