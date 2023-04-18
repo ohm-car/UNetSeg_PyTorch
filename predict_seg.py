@@ -20,7 +20,7 @@ def predict_img(net,
                 out_threshold=0.5):
     net.eval()
 
-    img = torch.from_numpy(PetsDataset.preprocess(full_img, scale_factor))
+    img = torch.from_numpy(PetsDataset.preprocess(full_img, scale_factor, isImage = True))
 
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
