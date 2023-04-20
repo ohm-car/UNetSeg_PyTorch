@@ -11,7 +11,7 @@ from torch.nn.functional import one_hot
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
-class PetsReconDataset(Dataset):
+class PetsReconSegDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix=''):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
@@ -38,6 +38,7 @@ class PetsReconDataset(Dataset):
 
         if len(img_nd.shape) == 2:
             img_nd -= 1
+            img_nd = np.array(one_hot(torch.tensor(img_nd, dtype=torch.long), num_classes = 3))
             # img_nd = np.expand_dims(img_nd, axis=2)
 
         # if not isImage:
@@ -48,12 +49,10 @@ class PetsReconDataset(Dataset):
 
         # HWC to CHW
         
+        img_trans = img_nd.transpose((2, 0, 1))
+
         if isImage:
-            img_trans = img_nd.transpose((2, 0, 1))
-            if img_trans.max() > 1:
-                img_trans = img_trans / 255
-        else:
-            img_trans = img_nd
+            img_trans = img_trans / 255
 
         return img_trans
 
@@ -108,11 +107,12 @@ class PetsReconDataset(Dataset):
 
         return {
             'image': torch.from_numpy(img).type(torch.FloatTensor),
-            'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor)
+            'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
+            'mask': torch.from_numpy(mask).type(torch.FloatTensor)
         }
 
 
-class CarvanaDataset(PetsReconDataset):
+class CarvanaDataset(PetsReconSegDataset):
     def __init__(self, imgs_dir, masks_dir, scale=1):
         # super().__init__(imgs_dir, masks_dir, scale, mask_suffix='_mask')
         super().__init__(imgs_dir, masks_dir, scale, mask_suffix='')

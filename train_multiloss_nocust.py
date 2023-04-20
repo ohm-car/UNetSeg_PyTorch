@@ -12,12 +12,12 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 
-from eval_multiloss import eval_net
+from eval_multiloss_nocust import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-from utils.petsReconDataset_multiloss import PetsReconDataset
-from utils.percLoss import percLoss
+from utils.petsReconSegDataset import PetsReconSegDataset
+# from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
 root_dir = Path().resolve().parent
@@ -26,7 +26,7 @@ print(dir_img)
 dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
 print(dir_mask)
 tm = datetime.datetime.now()
-dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+dir_checkpoint = 'checkpoints/multiloss_segmentation_with_recon/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
 
 def train_net(net,
@@ -38,7 +38,7 @@ def train_net(net,
               save_cp=True,
               img_scale=0.5):
 
-    dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
+    dataset = PetsReconSegDataset(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -75,7 +75,7 @@ def train_net(net,
             for batch in train_loader:
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
-                pcImg = batch['mask_perc']
+                true_mask = batch['mask']
                 assert imgs.shape[1] == net.n_channels, \
                     f'Network has been defined with {net.n_channels} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
@@ -84,27 +84,28 @@ def train_net(net,
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=mask_type)
-                pcImg = pcImg.to(device=device, dtype=torch.float32)
+                true_mask = true_mask.to(device=device, dtype=torch.float32)
 
-                masks_pred, pcPred = net(imgs)
-                # masks_pred = torch.argmax(masks_pred, dim=1)
-                # print("Masks Pred shape:", masks_pred.shape, "True Masks shape:", recon_img.shape)
-                pcLossCriterion = percLoss(threshold_prob = 0.9)
+                pred_recon_img, pred_mask = net(imgs)
+                # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
+                # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
+                # pcLossCriterion = percLoss(threshold_prob = 0.9)
                 # pcLossCriterion = nn.L1Loss()
 
-                loss = criterion(masks_pred, recon_img)
-                # print(torch.squeeze(pcPred).shape)
-                # print(torch.mean(torch.squeeze(pcPred), (1,2)).shape, pcImg)
-                pcLoss = pcLossCriterion(pcPred, pcImg)
-                total_loss = loss + pcLoss
-                epoch_loss += loss.item() + pcLoss.item()
-                writer.add_scalar('Loss/train', total_loss.item(), global_step)
+                recon_loss = criterion(pred_recon_img, recon_img)
+                # print(torch.squeeze(pred_mask).shape)
+                # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, true_mask)
+                # print("pred_mask shape:", pred_mask.shape, "true_mask shape:", true_mask.shape)
+                mask_loss = criterion(pred_mask, true_mask)
+                total_loss = recon_loss + mask_loss
+                epoch_loss += recon_loss.item() + mask_loss.item()
+                writer.add_scalar('recon_loss/train', total_loss.item(), global_step)
 
-                pbar.set_postfix(**{'percLoss (batch)': pcLoss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
+                pbar.set_postfix(**{'mask loss (batch)': mask_loss.item(), 'reconstruction recon_loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
                 total_loss.backward()
-                # pcLoss.backward()
+                # mask_loss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
@@ -122,7 +123,7 @@ def train_net(net,
 
                     if net.n_classes > 1:
                         logging.info('Validation cross entropy: {}'.format(val_score))
-                        writer.add_scalar('Loss/test', val_score, global_step)
+                        writer.add_scalar('recon_loss/test', val_score, global_step)
                     else:
                         logging.info('Validation Dice Coeff: {}'.format(val_score))
                         writer.add_scalar('Dice/test', val_score, global_step)
@@ -130,7 +131,7 @@ def train_net(net,
                     writer.add_images('images', imgs, global_step)
                     if net.n_classes == 1:
                         writer.add_images('masks/true', recon_img, global_step)
-                        writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
+                        writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
 
         if save_cp:
             try:
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=1, bilinear=True)
+    net = UNet(n_channels=3, n_classes=3, bilinear=True)
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
