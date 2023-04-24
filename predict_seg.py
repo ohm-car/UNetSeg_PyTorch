@@ -20,7 +20,7 @@ def predict_img(net,
                 out_threshold=0.5):
     net.eval()
 
-    img = torch.from_numpy(PetsDataset.preprocess(full_img, scale_factor))
+    img = torch.from_numpy(PetsDataset.preprocess(full_img, scale_factor, isImage = True))
 
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
@@ -94,7 +94,13 @@ def get_output_filenames(args):
 
 
 def mask_to_image(mask):
-    return Image.fromarray((mask * 255).astype(np.uint8))
+    
+    print(mask.shape, type(mask))
+
+    mask = np.argmax(mask, axis = 0)
+    # mask = mask.transpose((1,2,0))
+    # print(mask.shape, type(mask))
+    return Image.fromarray((mask * 64).astype(np.uint8), 'L')
 
 
 if __name__ == "__main__":
@@ -125,7 +131,7 @@ if __name__ == "__main__":
                            device=device)
 
         print(type(mask))
-        mask = np.argmax(mask, axis = 0)
+        # mask = np.argmax(mask, axis = 0)
         if not args.no_save:
             out_fn = out_files[i]
             result = mask_to_image(mask)
