@@ -99,16 +99,17 @@ def train_net(net,
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, true_mask)
                 # print("pred_mask shape:", pred_mask.shape, "true_mask shape:", true_mask.shape)
                 mask_loss = criterion(pred_mask, true_mask)
-#                total_loss = recon_loss + mask_loss
-                total_loss = mask_loss
+                total_loss = recon_loss + mask_loss
+                # total_loss = mask_loss
                 epoch_loss += recon_loss.item() + mask_loss.item()
                 writer.add_scalar('total_loss/train', total_loss.item(), global_step)
 
                 pbar.set_postfix(**{'mask loss (batch)': mask_loss.item(), 'reconstruction recon_loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
-                total_loss.backward()
-                # mask_loss.backward()
+                # total_loss.backward()
+                mask_loss.backward()
+                # recon_loss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
@@ -119,7 +120,8 @@ def train_net(net,
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
-                        writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
+                        if value.grad is not None:
+                            writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
                     val_score = eval_net(net, val_loader, device)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
