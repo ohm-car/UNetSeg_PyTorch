@@ -67,7 +67,7 @@ def train_net(net,
     else:
         criterion = nn.BCEWithLogitsLoss()
         
-    logging.info("Testing with keeping  just recon loss on")
+    logging.info("Testing with keeping just mask loss on")
 
     for epoch in range(epochs):
         net.train()
@@ -100,7 +100,7 @@ def train_net(net,
                 # print("pred_mask shape:", pred_mask.shape, "true_mask shape:", true_mask.shape)
                 mask_loss = criterion(pred_mask, true_mask)
 #                total_loss = recon_loss + mask_loss
-                total_loss = recon_loss
+                total_loss = mask_loss
                 epoch_loss += recon_loss.item() + mask_loss.item()
                 writer.add_scalar('total_loss/train', total_loss.item(), global_step)
 
