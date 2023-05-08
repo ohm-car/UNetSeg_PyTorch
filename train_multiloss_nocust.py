@@ -66,6 +66,8 @@ def train_net(net,
         criterion = nn.L1Loss()
     else:
         criterion = nn.BCEWithLogitsLoss()
+        
+    logging.info("Testing with keeping  just recon loss on")
 
     for epoch in range(epochs):
         net.train()
@@ -97,9 +99,10 @@ def train_net(net,
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, true_mask)
                 # print("pred_mask shape:", pred_mask.shape, "true_mask shape:", true_mask.shape)
                 mask_loss = criterion(pred_mask, true_mask)
-                total_loss = recon_loss + mask_loss
+#                total_loss = recon_loss + mask_loss
+                total_loss = recon_loss
                 epoch_loss += recon_loss.item() + mask_loss.item()
-                writer.add_scalar('recon_loss/train', total_loss.item(), global_step)
+                writer.add_scalar('total_loss/train', total_loss.item(), global_step)
 
                 pbar.set_postfix(**{'mask loss (batch)': mask_loss.item(), 'reconstruction recon_loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
 
