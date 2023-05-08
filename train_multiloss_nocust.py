@@ -116,7 +116,7 @@ def train_net(net,
                 pbar.update(imgs.shape[0])
                 global_step += 1
                 # print(global_step, n_train, batch_size)
-                if global_step % (n_train // (1 * batch_size) + 1) == 0:
+                if global_step % (n_train // (10 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -127,8 +127,8 @@ def train_net(net,
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     if net.n_classes > 1:
-                        logging.info('Validation cross entropy: {}'.format(val_score))
-                        writer.add_scalar('recon_loss/test', val_score, global_step)
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        writer.add_scalar('recon_loss/test', val_score[0], global_step)
                     else:
                         logging.info('Validation Dice Coeff: {}'.format(val_score))
                         writer.add_scalar('Dice/test', val_score, global_step)

@@ -10,6 +10,8 @@ def eval_net(net, loader, device):
     net.eval()
     mask_type = torch.float32 if net.n_classes == 1 else torch.long
     n_val = len(loader)  # the number of batch
+    recon_loss = 0
+    mask_loss = 0
     tot = 0
 
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
@@ -25,7 +27,11 @@ def eval_net(net, loader, device):
             if net.n_classes > 1:
                 # pred_perc = torch.mean(torch.squeeze(pred_mask), (1,2))
                 # pred_perc = torch.unsqueeze(pred_perc, 1)
-                tot += F.l1_loss(pred_recon_img, recon_img).item() + F.l1_loss(pred_mask, true_mask).item()
+                recon_loss_batch = F.l1_loss(pred_recon_img, recon_img).item()
+                mask_loss_batch = F.l1_loss(pred_mask, true_mask).item()
+                recon_loss += recon_loss_batch
+                mask_loss += mask_loss_batch
+                tot += recon_loss_batch + mask_loss_batch
             else:
                 pred = torch.sigmoid(pred_recon_img)
                 pred = (pred > 0.5).float()
@@ -36,4 +42,4 @@ def eval_net(net, loader, device):
             pbar.update()
 
     net.train()
-    return tot / n_val
+    return tot / n_val, mask_loss / n_val, recon_loss / n_val
