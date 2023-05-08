@@ -67,7 +67,7 @@ def train_net(net,
     else:
         criterion = nn.BCEWithLogitsLoss()
         
-    logging.info("Testing with keeping just reconstruction loss on")
+    logging.info("Testing with keeping just mask loss on")
 
     for epoch in range(epochs):
         net.train()
@@ -108,8 +108,8 @@ def train_net(net,
 
                 optimizer.zero_grad()
                 # total_loss.backward()
-                # mask_loss.backward()
-                recon_loss.backward()
+                mask_loss.backward()
+                # recon_loss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
