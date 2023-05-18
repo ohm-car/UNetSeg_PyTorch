@@ -99,24 +99,25 @@ def train_net(net,
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, true_mask)
                 # print("pred_mask shape:", pred_mask.shape, "true_mask shape:", true_mask.shape)
                 mask_loss = criterion(pred_mask, true_mask)
-                total_loss = recon_loss + mask_loss
+                # total_loss = recon_loss + mask_loss
                 # total_loss = mask_loss
+                total_loss = recon_loss
                 epoch_loss += recon_loss.item() + mask_loss.item()
                 writer.add_scalar('total_loss/train', total_loss.item(), global_step)
 
-                pbar.set_postfix(**{'mask loss (batch)': mask_loss.item(), 'reconstruction recon_loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
+                pbar.set_postfix(**{'mask loss (batch)': mask_loss.item(), 'reconstruction loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
-                # total_loss.backward()
+                total_loss.backward()
                 # mask_loss.backward()
-                recon_loss.backward()
+                # recon_loss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
                 # print(global_step, n_train, batch_size)
-                if global_step % (n_train // (10 * batch_size) + 1) == 0:
+                if global_step % (n_train // (1 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
