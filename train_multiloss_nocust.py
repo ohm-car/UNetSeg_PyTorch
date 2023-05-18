@@ -68,7 +68,7 @@ def train_net(net,
         criterion = nn.BCEWithLogitsLoss()
         
     logging.info("Testing with keeping just reconstruction loss on")
-    logging.info("Testing with keeping just mask loss on")
+    # logging.info("Testing with keeping just mask loss on")
 
     for epoch in range(epochs):
         net.train()
