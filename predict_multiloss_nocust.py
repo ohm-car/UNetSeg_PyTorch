@@ -51,7 +51,7 @@ def predict_img(net,
         im_probs = tf(im_probs.cpu())
         mask_probs = tf(mask_probs.cpu())
         full_im = im_probs.squeeze().cpu().numpy()
-        print('mask_probs shape:', mask_probs.shape)
+        print('mask_probs shape:', mask_probs.shape, 'im_probs shape:', im_probs.shape)
         full_mask = mask_probs.squeeze().cpu().numpy()
 
     return full_im, full_mask
