@@ -23,6 +23,7 @@ def eval_net(net, loader, device):
 
             with torch.no_grad():
                 pred_recon_img, pred_mask = net(imgs)
+                # pred_recon_img = net(imgs)
 
             if net.n_classes > 1:
                 # pred_perc = torch.mean(torch.squeeze(pred_mask), (1,2))
@@ -32,6 +33,7 @@ def eval_net(net, loader, device):
                 recon_loss += recon_loss_batch
                 mask_loss += mask_loss_batch
                 tot += recon_loss_batch + mask_loss_batch
+                # tot += recon_loss_batch
             else:
                 pred = torch.sigmoid(pred_recon_img)
                 pred = (pred > 0.5).float()
@@ -43,3 +45,4 @@ def eval_net(net, loader, device):
 
     net.train()
     return tot / n_val, mask_loss / n_val, recon_loss / n_val
+    # return tot / n_val, recon_loss / n_val
