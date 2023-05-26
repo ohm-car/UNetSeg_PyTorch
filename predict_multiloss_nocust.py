@@ -20,7 +20,7 @@ def predict_img(net,
                 out_threshold=0.5):
     net.eval()
 
-    img = torch.from_numpy(PetsReconSegDataset.preprocess(full_img, scale_factor, isImage=True))
+    img = torch.from_numpy(PetsReconSegDataset.preprocessIM(full_img, scale_factor, isImage=True))
 
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
@@ -99,6 +99,7 @@ def get_output_filenames(args):
     else:
         out_files = args.output
 
+    print(out_files)
     return out_files
 
 

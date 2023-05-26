@@ -93,6 +93,7 @@ def get_output_filenames(args):
     else:
         out_files = args.output
 
+    print(out_files)
     return out_files
 
 
