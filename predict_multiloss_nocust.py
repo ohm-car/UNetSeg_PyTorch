@@ -26,11 +26,11 @@ def predict_img(net,
     img = img.to(device=device, dtype=torch.float32)
 
     with torch.no_grad():
-        # pred_recon_img, pred_mask = net(img)
-        pred_recon_img = net(img)
+        pred_recon_img, pred_mask = net(img)
+        # pred_recon_img = net(img)
 
         print('ReconIM shape:', pred_recon_img.shape)
-        # print('Mask shape:', pred_mask.shape)
+        print('Mask shape:', pred_mask.shape)
 
         # if net.n_classes > 1:
         #     im_probs = F.softmax(output, dim=1)
@@ -38,7 +38,7 @@ def predict_img(net,
         #     im_probs = torch.sigmoid(output)
 
         im_probs = pred_recon_img.squeeze(0)
-        # mask_probs = pred_mask.squeeze(0)
+        mask_probs = pred_mask.squeeze(0)
 
 
         tf = transforms.Compose(
@@ -50,14 +50,14 @@ def predict_img(net,
         )
 
         im_probs = tf(im_probs.cpu())
-        # mask_probs = tf(mask_probs.cpu())
+        mask_probs = tf(mask_probs.cpu())
         full_im = im_probs.squeeze().cpu().numpy()
-        # print('mask_probs shape:', mask_probs.shape)
+        print('mask_probs shape:', mask_probs.shape)
         print('im_probs shape:', im_probs.shape)
-        # full_mask = mask_probs.squeeze().cpu().numpy()
+        full_mask = mask_probs.squeeze().cpu().numpy()
 
-    # return full_im, full_mask
-    return full_im
+    return full_im, full_mask
+    # return full_im
 
 
 def get_args():
