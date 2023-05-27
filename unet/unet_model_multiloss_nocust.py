@@ -38,3 +38,4 @@ class UNet(nn.Module):
         im_recon = self.outI(x)
         mask_logits = self.outM(x)
         return im_recon, mask_logits
+        # return im_recon

@@ -66,9 +66,10 @@ def train_net(net,
         criterion = nn.L1Loss()
     else:
         criterion = nn.BCEWithLogitsLoss()
-        
-    # logging.info("Testing with keeping just reconstruction loss on")
-    logging.info("Testing with keeping just mask loss on")
+    
+    # logging.info("Testing with both mask and recon losses")
+    logging.info("Testing with keeping just reconstruction loss on")
+    # logging.info("Testing with keeping just mask loss on")
 
     for epoch in range(epochs):
         net.train()
@@ -86,10 +87,12 @@ def train_net(net,
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 mask_type = torch.float32 if net.n_classes == 1 else torch.long
-                recon_img = recon_img.to(device=device, dtype=mask_type)
+                recon_image_type = torch.float32
+                recon_img = recon_img.to(device=device, dtype=recon_image_type)
                 true_mask = true_mask.to(device=device, dtype=torch.float32)
 
                 pred_recon_img, pred_mask = net(imgs)
+                # pred_recon_img = net(imgs)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
                 # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
                 # pcLossCriterion = percLoss(threshold_prob = 0.9)
@@ -101,12 +104,13 @@ def train_net(net,
                 # print("pred_mask shape:", pred_mask.shape, "true_mask shape:", true_mask.shape)
                 mask_loss = criterion(pred_mask, true_mask)
                 # total_loss = recon_loss + mask_loss
-                total_loss = mask_loss
-                # total_loss = recon_loss
+                # total_loss = mask_loss
+                total_loss = recon_loss
                 epoch_loss += recon_loss.item() + mask_loss.item()
                 writer.add_scalar('total_loss/train', total_loss.item(), global_step)
 
                 pbar.set_postfix(**{'mask loss (batch)': mask_loss.item(), 'reconstruction loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
+                # pbar.set_postfix(**{'reconstruction loss': recon_loss.item(),'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
                 total_loss.backward()
@@ -118,7 +122,7 @@ def train_net(net,
                 pbar.update(imgs.shape[0])
                 global_step += 1
                 # print(global_step, n_train, batch_size)
-                if global_step % (n_train // (1 * batch_size) + 1) == 0:
+                if global_step % (n_train // (10 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -130,6 +134,7 @@ def train_net(net,
 
                     if net.n_classes > 1:
                         logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        # logging.info('Validation L1 loss: Total: {}, Recon: {}'.format(val_score[0], val_score[1]))
                         writer.add_scalar('recon_loss/test', val_score[0], global_step)
                     else:
                         logging.info('Validation Dice Coeff: {}'.format(val_score))
@@ -146,7 +151,7 @@ def train_net(net,
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
-            if (epoch + 1) % 5 == 0:
+            if (epoch + 1) % 1 == 0:
                 torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
                 logging.info(f'Checkpoint {epoch + 1} saved !')

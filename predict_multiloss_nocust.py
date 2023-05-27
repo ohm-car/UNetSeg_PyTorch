@@ -20,16 +20,17 @@ def predict_img(net,
                 out_threshold=0.5):
     net.eval()
 
-    img = torch.from_numpy(PetsReconSegDataset.preprocess(full_img, scale_factor, isImage=True))
+    img = torch.from_numpy(PetsReconSegDataset.preprocessIM(full_img, scale_factor, isImage=True))
 
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
 
     with torch.no_grad():
-        pred_recon_img, pred_mask = net(img)
+        # pred_recon_img, pred_mask = net(img)
+        pred_recon_img = net(img)
 
         print('ReconIM shape:', pred_recon_img.shape)
-        print('Mask shape:', pred_mask.shape)
+        # print('Mask shape:', pred_mask.shape)
 
         # if net.n_classes > 1:
         #     im_probs = F.softmax(output, dim=1)
@@ -37,7 +38,7 @@ def predict_img(net,
         #     im_probs = torch.sigmoid(output)
 
         im_probs = pred_recon_img.squeeze(0)
-        mask_probs = pred_mask.squeeze(0)
+        # mask_probs = pred_mask.squeeze(0)
 
 
         tf = transforms.Compose(
@@ -49,12 +50,14 @@ def predict_img(net,
         )
 
         im_probs = tf(im_probs.cpu())
-        mask_probs = tf(mask_probs.cpu())
+        # mask_probs = tf(mask_probs.cpu())
         full_im = im_probs.squeeze().cpu().numpy()
-        print('mask_probs shape:', mask_probs.shape)
-        full_mask = mask_probs.squeeze().cpu().numpy()
+        # print('mask_probs shape:', mask_probs.shape)
+        print('im_probs shape:', im_probs.shape)
+        # full_mask = mask_probs.squeeze().cpu().numpy()
 
-    return full_im, full_mask
+    # return full_im, full_mask
+    return full_im
 
 
 def get_args():
@@ -99,6 +102,7 @@ def get_output_filenames(args):
     else:
         out_files = args.output
 
+    print(out_files)
     return out_files
 
 
@@ -155,9 +159,16 @@ if __name__ == "__main__":
                            out_threshold=args.mask_threshold,
                            device=device)
 
+        # rec_im = predict_img(net=net,
+        #                    full_img=img,
+        #                    scale_factor=args.scale,
+        #                    out_threshold=args.mask_threshold,
+        #                    device=device)
+
         # print(type(mask), mask.shape)
         # mask = np.argmax(mask, axis = 0)
         print(mask.shape)
+        print(rec_im.shape)
         if not args.no_save:
             out_fn = out_files[i]
             result_im = imrecon_to_image(rec_im)

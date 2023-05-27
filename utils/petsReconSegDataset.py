@@ -36,6 +36,8 @@ class PetsReconSegDataset(Dataset):
 
         img_nd = np.array(pil_img)
 
+        # print("img_nd shape:", img_nd.shape, "img_nd shape len:", len(img_nd.shape))
+
         if len(img_nd.shape) == 2:
             img_nd -= 1
             img_nd = np.array(one_hot(torch.tensor(img_nd, dtype=torch.long), num_classes = 3))
@@ -53,6 +55,36 @@ class PetsReconSegDataset(Dataset):
 
         if isImage:
             img_trans = img_trans / 255
+
+        return img_trans
+
+    @classmethod
+    def preprocessIM(cls, pil_img, scale, isImage):
+        w, h = pil_img.size
+        newW, newH = int(scale * w), int(scale * h)
+        assert newW > 0 and newH > 0, 'Scale is too small'
+        pil_img = pil_img.resize((160, 160))
+
+        img_nd = np.array(pil_img)
+
+        if len(img_nd.shape) == 2:
+            img_nd -= 1
+            # img_nd = np.expand_dims(img_nd, axis=2)
+
+        # if not isImage:
+            # img_nd = cls.onehot_initialization(cls, img_nd)
+            # img_nd -= 1
+            # img_nd = (np.arange(img_nd.max()+1) == img_nd[...,None]).astype(int)
+            # print(img_nd.shape)
+
+        # HWC to CHW
+        
+        if isImage:
+            img_trans = img_nd.transpose((2, 0, 1))
+            if img_trans.max() > 1:
+                img_trans = img_trans / 255
+        else:
+            img_trans = img_nd
 
         return img_trans
 
@@ -102,7 +134,7 @@ class PetsReconSegDataset(Dataset):
         assert img.size == mask.size, \
             f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
-        img = self.preprocess(img, self.scale, isImage = True)
+        img = self.preprocessIM(img, self.scale, isImage = True)
         mask = self.preprocess(mask, self.scale, isImage = False)
 
         return {
