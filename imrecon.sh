@@ -6,8 +6,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_2080
-#SBATCH --output=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss_nocust_individual/mlseg_run_3.out
-#SBATCH --error=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss_nocust_individual/mlseg_run_3.err
+#SBATCH --output=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss_nocust_individual/mlseg_run_4.out
+#SBATCH --error=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss_nocust_individual/mlseg_run_4.err
 
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
