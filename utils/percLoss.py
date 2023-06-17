@@ -5,7 +5,7 @@ from torch.autograd import Variable
 
 class percLoss(nn.Module):
 
-    def __init__(self, threshold_prob, num_classes=1):
+    def __init__(self, threshold_prob=0.9, num_classes=1):
         super().__init__()
         self.threshold_prob = threshold_prob
         self.num_classes = num_classes

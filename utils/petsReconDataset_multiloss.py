@@ -118,7 +118,7 @@ class PetsReconDataset(Dataset):
             f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
         img = self.preprocess(img, self.scale, isImage = True)
-        mask = self.preprocess(mask, self.scale, isImage = False)
+        # mask = self.preprocess(mask, self.scale, isImage = False)
         maskPerc = self.percsDict[mask_percF]
 
         return {

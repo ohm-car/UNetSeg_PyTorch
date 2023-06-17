@@ -10,7 +10,7 @@ from torchvision import transforms
 
 from unet import UNet
 from utils.data_vis import plot_img_and_mask
-from utils.petsReconDataset import PetsReconDataset
+from utils.petsReconDataset_multiloss import PetsReconDataset
 
 
 def predict_img(net,
@@ -114,10 +114,11 @@ def imrecon_to_image(mask):
 
 def mask_to_image(mask):
     
+    #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
     print(mask.shape, type(mask))
     # mask = mask.transpose((1,2,0))
     # print(mask.shape, type(mask))
-    return Image.fromarray((mask * 255).astype(np.uint8), '1')
+    return Image.fromarray((mask * 64).astype(np.uint8), 'L')
 
 
 if __name__ == "__main__":

@@ -31,6 +31,7 @@ dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.for
 
 def train_net(net,
               device,
+              save_freq,
               epochs=5,
               batch_size=1,
               lr=0.001,
@@ -65,7 +66,7 @@ def train_net(net,
     if net.n_classes > 1:
         criterion = nn.L1Loss()
     else:
-        criterion = nn.BCEWithLogitsLoss()
+        criterion = nn.L1Loss()
 
     for epoch in range(epochs):
         net.train()
@@ -75,7 +76,7 @@ def train_net(net,
             for batch in train_loader:
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
-                pcImg = batch['mask_perc']
+                imgs_percs = batch['mask_perc']
                 assert imgs.shape[1] == net.n_channels, \
                     f'Network has been defined with {net.n_channels} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
@@ -83,19 +84,19 @@ def train_net(net,
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 mask_type = torch.float32 if net.n_classes == 1 else torch.long
-                recon_img = recon_img.to(device=device, dtype=mask_type)
-                pcImg = pcImg.to(device=device, dtype=torch.float32)
+                recon_img = recon_img.to(device=device, dtype=torch.float32)
+                imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
 
-                masks_pred, pcPred = net(imgs)
-                # masks_pred = torch.argmax(masks_pred, dim=1)
-                # print("Masks Pred shape:", masks_pred.shape, "True Masks shape:", recon_img.shape)
+                pred_recon_img, pred_mask = net(imgs)
+                # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
+                # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
                 pcLossCriterion = percLoss(threshold_prob = 0.9)
                 # pcLossCriterion = nn.L1Loss()
 
-                loss = criterion(masks_pred, recon_img)
-                # print(torch.squeeze(pcPred).shape)
-                # print(torch.mean(torch.squeeze(pcPred), (1,2)).shape, pcImg)
-                pcLoss = pcLossCriterion(pcPred, pcImg)
+                loss = criterion(pred_recon_img, recon_img)
+                # print(torch.squeeze(pred_mask).shape)
+                # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
+                pcLoss = pcLossCriterion(pred_mask, imgs_percs)
                 total_loss = loss + pcLoss
                 epoch_loss += loss.item() + pcLoss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
@@ -121,16 +122,18 @@ def train_net(net,
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     if net.n_classes > 1:
-                        logging.info('Validation cross entropy: {}'.format(val_score))
-                        writer.add_scalar('Loss/test', val_score, global_step)
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        writer.add_scalar('Loss/test', val_score[0], global_step)
                     else:
-                        logging.info('Validation Dice Coeff: {}'.format(val_score))
-                        writer.add_scalar('Dice/test', val_score, global_step)
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        writer.add_scalar('Loss/test', val_score[0], global_step)
+                        writer.add_scalar('Recon/test', val_score[1], global_step)
+                        writer.add_scalar('Perc/test', val_score[2], global_step)
 
                     writer.add_images('images', imgs, global_step)
                     if net.n_classes == 1:
                         writer.add_images('masks/true', recon_img, global_step)
-                        writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
+                        writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
 
         if save_cp:
             try:
@@ -138,7 +141,7 @@ def train_net(net,
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
-            if (epoch + 1) % 5 == 0:
+            if (epoch + 1) % save_freq == 0:
                 torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
                 logging.info(f'Checkpoint {epoch + 1} saved !')
@@ -151,6 +154,8 @@ def get_args():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-e', '--epochs', metavar='E', type=int, default=5,
                         help='Number of epochs', dest='epochs')
+    parser.add_argument('-sf', '--saveFreq', metavar='SF', type=int, default=1,
+                        help='Save every sf epochs', dest='saveFreq')
     parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=2,
                         help='Batch size', dest='batchsize')
     parser.add_argument('-l', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.0001,
@@ -208,7 +213,8 @@ if __name__ == '__main__':
                   lr=args.lr,
                   device=device,
                   img_scale=args.scale,
-                  val_percent=args.val / 100)
+                  val_percent=args.val / 100,
+                  save_freq = args.saveFreq)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
