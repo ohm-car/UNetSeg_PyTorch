@@ -114,6 +114,7 @@ def imrecon_to_image(mask):
 
 def mask_to_image(mask):
     
+    #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
     print(mask.shape, type(mask))
     # mask = mask.transpose((1,2,0))
     # print(mask.shape, type(mask))
