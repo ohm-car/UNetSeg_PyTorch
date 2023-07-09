@@ -43,6 +43,9 @@ def train_net(net,
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
+    # print(type(dataset),type(train),type(train.dataset))
+    # print("Train IDs:", train.dataset.ids)
+    # print("Val IDs:", val.dataset.ids)
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, drop_last=True)
 
@@ -166,6 +169,8 @@ def get_args():
                         help='Downscaling factor of the images')
     parser.add_argument('-v', '--validation', dest='val', type=float, default=10.0,
                         help='Percent of the data that is used as validation (0-100)')
+    parser.add_argument('-ms', '--manualSeed', metavar='MS', type=int, default=0,
+                        help='Manual Seed for reproducability', dest='manual_seed')
 
     return parser.parse_args()
 
@@ -182,6 +187,9 @@ if __name__ == '__main__':
         device = torch.device('cpu')
 
     logging.info(f'Using device {device}')
+
+    torch.manual_seed(args.manual_seed)
+    logging.info(f'Set seed for reproducability: {args.manual_seed}')
 
     # Change here to adapt to your data
     # n_channels=3 for RGB images
