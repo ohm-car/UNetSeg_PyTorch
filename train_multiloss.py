@@ -159,7 +159,7 @@ def get_args():
                         help='Number of epochs', dest='epochs')
     parser.add_argument('-sf', '--saveFreq', metavar='SF', type=int, default=1,
                         help='Save every sf epochs', dest='saveFreq')
-    parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=2,
+    parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=4,
                         help='Batch size', dest='batchsize')
     parser.add_argument('-l', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.0001,
                         help='Learning rate', dest='lr')
