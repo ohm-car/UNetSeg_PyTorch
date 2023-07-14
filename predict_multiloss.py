@@ -117,8 +117,10 @@ def mask_to_image(mask):
     #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
     print(mask.shape, type(mask))
     # mask = mask.transpose((1,2,0))
+    # thres_mask = mask > 0.3
     # print(mask.shape, type(mask))
-    return Image.fromarray((mask * 64).astype(np.uint8), 'L')
+    # return Image.fromarray((mask * 192).astype(np.uint8), 'L')
+    return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
 
 
 if __name__ == "__main__":
