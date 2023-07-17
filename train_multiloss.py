@@ -71,6 +71,8 @@ def train_net(net,
     else:
         criterion = nn.L1Loss()
 
+    weight_recon_loss, weight_percLoss = 1, 5
+
     for epoch in range(epochs):
         net.train()
 
@@ -96,10 +98,10 @@ def train_net(net,
                 pcLossCriterion = percLoss(threshold_prob = 0.9)
                 # pcLossCriterion = nn.L1Loss()
 
-                loss = criterion(pred_recon_img, recon_img)
+                loss = weight_recon_loss * criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
-                pcLoss = pcLossCriterion(pred_mask, imgs_percs)
+                pcLoss = weight_percLoss * pcLossCriterion(pred_mask, imgs_percs)
                 total_loss = loss + pcLoss
                 epoch_loss += loss.item() + pcLoss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
