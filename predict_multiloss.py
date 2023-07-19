@@ -119,8 +119,8 @@ def mask_to_image(mask):
     # mask = mask.transpose((1,2,0))
     # thres_mask = mask > 0.3
     # print(mask.shape, type(mask))
-    # return Image.fromarray((mask * 192).astype(np.uint8), 'L')
-    return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
+    return Image.fromarray((mask * 255).astype(np.uint8), 'L')
+    # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
 
 
 if __name__ == "__main__":
@@ -158,7 +158,10 @@ if __name__ == "__main__":
 
         # print(type(mask), mask.shape)
         # mask = np.argmax(mask, axis = 0)
-        print(mask.shape)
+        # print(mask.shape)
+
+        # Code to print true percentage and predicted percentage
+
         if not args.no_save:
             out_fn = out_files[i]
             result_im = imrecon_to_image(rec_im)
