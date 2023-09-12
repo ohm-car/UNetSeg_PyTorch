@@ -153,6 +153,13 @@ if __name__ == "__main__":
 
     train_loader, val_loader = get_val_images(dataset)
 
+    for batch in val_loader:
+
+        imgs = batch['image']
+        pred_recon_img, pred_mask = net(imgs)
+
+        
+
     out_files = get_output_filenames(args)
 
     net = UNet(n_channels=3, n_classes=1)
