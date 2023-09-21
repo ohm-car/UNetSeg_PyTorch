@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -64,7 +65,7 @@ def get_args():
                         metavar='FILE',
                         help="Specify the file in which the model is stored")
     parser.add_argument('--input', '-i', metavar='INPUT', nargs='+',
-                        help='filenames of input images', required=True)
+                        help='filenames of input images', required=False)
 
     parser.add_argument('--output', '-o', metavar='INPUT', nargs='+',
                         help='Filenames of ouput images')
@@ -124,7 +125,7 @@ def mask_to_image(mask):
     return Image.fromarray((mask * 255).astype(np.uint8), 'L')
     # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
 
-def get_val_images(dataset):
+def get_dataloaders(dataset):
 
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
@@ -135,6 +136,10 @@ def get_val_images(dataset):
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, drop_last=True)
     return train_loader, val_loader
+
+def get_image_filenames(dataset):
+
+    return dataset.get_filenames()
 
 
 if __name__ == "__main__":
@@ -151,21 +156,10 @@ if __name__ == "__main__":
 
     dataset = PetsReconDataset(dir_img, dir_mask, args.scale)
 
-    train_loader, val_loader = get_val_images(dataset)
-
-    for batch in val_loader:
-
-        imgs = batch['image']
-        pred_recon_img, pred_mask = net(imgs)
-
-        
-
-    out_files = get_output_filenames(args)
+    # train_loader, val_loader = get_dataloaders(dataset)
 
     net = UNet(n_channels=3, n_classes=1)
-
     logging.info("Loading model {}".format(args.model))
-
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -179,32 +173,97 @@ if __name__ == "__main__":
 
     logging.info("Model loaded !")
 
-    for i, fn in enumerate(in_files):
-        logging.info("\nPredicting image {} ...".format(fn))
+    for fname in val_dataset.get_filenames():
 
-        img = Image.open(fn)
-
+        net.eval()
+        im_file = None  #Add code here
+        img = Image.open(im_file)
         rec_im, mask = predict_img(net=net,
                            full_img=img,
                            scale_factor=args.scale,
                            out_threshold=args.mask_threshold,
                            device=device)
 
-        # print(type(mask), mask.shape)
-        # mask = np.argmax(mask, axis = 0)
-        # print(mask.shape)
 
-        # Code to print true percentage and predicted percentage
+    for batch in val_loader:
+        net.eval()
+        imgs = batch['image']
+        with torch.no_grad():
+            pred_recon_img, pred_mask = net(imgs)
 
-        if not args.no_save:
-            out_fn = out_files[i]
-            result_im = imrecon_to_image(rec_im)
-            result_mask = mask_to_image(mask)
-            result_im.save(out_files[i][0])
-            result_mask.save(out_files[i][1])
+            print('ReconIM shape:', pred_im.shape)
+            print('Mask shape:', pred_mask.shape)
 
-            logging.info("Mask saved to {}".format(out_files[i]))
+            # if net.n_classes > 1:
+            #     im_probs = F.softmax(output, dim=1)
+            # else:
+            #     im_probs = torch.sigmoid(output)
 
-        if args.viz:
-            logging.info("Visualizing results for image {}, close to continue ...".format(fn))
-            plot_img_and_mask(img, mask)
+            im_probs = pred_im.squeeze(0)
+            mask_probs = pred_mask.squeeze(0)
+
+
+            tf = transforms.Compose(
+                [
+                    transforms.ToPILImage(),
+                    transforms.Resize(full_img.size[1]),
+                    transforms.ToTensor()
+                ]
+            )
+
+            im_probs = tf(im_probs.cpu())
+            mask_probs = tf(mask_probs.cpu())
+            full_im = im_probs.squeeze().cpu().numpy()
+            print('mask_probs shape:', mask_probs.shape)
+            full_mask = mask_probs.squeeze().cpu().numpy()
+
+        
+
+    # out_files = get_output_filenames(args)
+
+    # net = UNet(n_channels=3, n_classes=1)
+
+    # logging.info("Loading model {}".format(args.model))
+
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # if torch.cuda.is_available():
+    #     device = torch.device('cuda')
+    # elif torch.backends.mps.is_available():
+    #     device = torch.device('mps')
+    # else:
+    #     device = torch.device('cpu')
+    # logging.info(f'Using device {device}')
+    # net.to(device=device)
+    # net.load_state_dict(torch.load(args.model, map_location=device))
+
+    # logging.info("Model loaded !")
+
+    # for i, fn in enumerate(in_files):
+    #     logging.info("\nPredicting image {} ...".format(fn))
+
+    #     img = Image.open(fn)
+
+    #     rec_im, mask = predict_img(net=net,
+    #                        full_img=img,
+    #                        scale_factor=args.scale,
+    #                        out_threshold=args.mask_threshold,
+    #                        device=device)
+
+    #     # print(type(mask), mask.shape)
+    #     # mask = np.argmax(mask, axis = 0)
+    #     # print(mask.shape)
+
+    #     # Code to print true percentage and predicted percentage
+
+    #     if not args.no_save:
+    #         out_fn = out_files[i]
+    #         result_im = imrecon_to_image(rec_im)
+    #         result_mask = mask_to_image(mask)
+    #         result_im.save(out_files[i][0])
+    #         result_mask.save(out_files[i][1])
+
+    #         logging.info("Mask saved to {}".format(out_files[i]))
+
+    #     if args.viz:
+    #         logging.info("Visualizing results for image {}, close to continue ...".format(fn))
+    #         plot_img_and_mask(img, mask)

@@ -40,6 +40,9 @@ class PetsReconDataset(Dataset):
         # print(x)
         return x
 
+    def get_filenames(self):
+        return self.ids
+
 
     @classmethod
     def preprocess(cls, pil_img, scale, isImage):
