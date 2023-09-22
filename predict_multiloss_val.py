@@ -2,12 +2,14 @@ import argparse
 import logging
 import os
 from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
+from torch.utils.data import DataLoader, random_split
 
 from unet import UNet
 from utils.data_vis import plot_img_and_mask
@@ -137,6 +139,13 @@ def get_dataloaders(dataset):
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, drop_last=True)
     return train_loader, val_loader
 
+def get_datasets(dataset, val_percent):
+
+    n_val = int(len(dataset) * val_percent)
+    n_train = len(dataset) - n_val
+    train, val = random_split(dataset, [n_train, n_val])
+    return train, val
+
 def get_image_filenames(dataset):
 
     return dataset.get_filenames()
@@ -145,18 +154,27 @@ def get_image_filenames(dataset):
 if __name__ == "__main__":
     args = get_args()
     in_files = args.input
+    val_percent = 10
 
     torch.manual_seed(args.manual_seed)
 
     #Code to get train and val dataloaders. Use PetsDataset from utils
 
     root_dir = Path().resolve().parent
+    print("Root dir: ", root_dir)
     dir_img = os.path.join(root_dir, 'data/images/')
     dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
 
-    dataset = PetsReconDataset(dir_img, dir_mask, args.scale)
+    tm = datetime.now()
+    dir_result = os.path.join(root_dir, 'Validation_Runs/{:02d}-{:02d}'.format(tm.month, tm.day))
+    print("Result dir:", dir_result)
+    os.makedirs(dir_result)
+
+    petsDataset = PetsReconDataset(dir_img, dir_mask, args.scale)
 
     # train_loader, val_loader = get_dataloaders(dataset)
+
+    train_dataset, val_dataset = get_datasets(petsDataset, val_percent)
 
     net = UNet(n_channels=3, n_classes=1)
     logging.info("Loading model {}".format(args.model))
@@ -176,46 +194,59 @@ if __name__ == "__main__":
     for fname in val_dataset.get_filenames():
 
         net.eval()
-        im_file = None  #Add code here
-        img = Image.open(im_file)
+        im_file = glob(self.dir_img + fname + '.*')
+        assert len(im_file) == 1, \
+            f'Either no image or multiple images found for the ID {idx}: {img_file}'
+        img = Image.open(im_file[0])
         rec_im, mask = predict_img(net=net,
                            full_img=img,
                            scale_factor=args.scale,
                            out_threshold=args.mask_threshold,
                            device=device)
 
+        #Write predictions
 
-    for batch in val_loader:
-        net.eval()
-        imgs = batch['image']
-        with torch.no_grad():
-            pred_recon_img, pred_mask = net(imgs)
+        if not args.no_save:
+            out_fn = '{}/'.format(dir_result)
+            result_im = imrecon_to_image(rec_im)
+            result_mask = mask_to_image(mask)
+            result_im.save(out_fn)
+            result_mask.save(out_fn)
 
-            print('ReconIM shape:', pred_im.shape)
-            print('Mask shape:', pred_mask.shape)
-
-            # if net.n_classes > 1:
-            #     im_probs = F.softmax(output, dim=1)
-            # else:
-            #     im_probs = torch.sigmoid(output)
-
-            im_probs = pred_im.squeeze(0)
-            mask_probs = pred_mask.squeeze(0)
+            logging.info("Mask saved to {}".format(out_files[i]))
 
 
-            tf = transforms.Compose(
-                [
-                    transforms.ToPILImage(),
-                    transforms.Resize(full_img.size[1]),
-                    transforms.ToTensor()
-                ]
-            )
+    # for batch in val_loader:
+    #     net.eval()
+    #     imgs = batch['image']
+    #     with torch.no_grad():
+    #         pred_recon_img, pred_mask = net(imgs)
 
-            im_probs = tf(im_probs.cpu())
-            mask_probs = tf(mask_probs.cpu())
-            full_im = im_probs.squeeze().cpu().numpy()
-            print('mask_probs shape:', mask_probs.shape)
-            full_mask = mask_probs.squeeze().cpu().numpy()
+    #         print('ReconIM shape:', pred_im.shape)
+    #         print('Mask shape:', pred_mask.shape)
+
+    #         # if net.n_classes > 1:
+    #         #     im_probs = F.softmax(output, dim=1)
+    #         # else:
+    #         #     im_probs = torch.sigmoid(output)
+
+    #         im_probs = pred_im.squeeze(0)
+    #         mask_probs = pred_mask.squeeze(0)
+
+
+    #         tf = transforms.Compose(
+    #             [
+    #                 transforms.ToPILImage(),
+    #                 transforms.Resize(full_img.size[1]),
+    #                 transforms.ToTensor()
+    #             ]
+    #         )
+
+    #         im_probs = tf(im_probs.cpu())
+    #         mask_probs = tf(mask_probs.cpu())
+    #         full_im = im_probs.squeeze().cpu().numpy()
+    #         print('mask_probs shape:', mask_probs.shape)
+    #         full_mask = mask_probs.squeeze().cpu().numpy()
 
         
 
