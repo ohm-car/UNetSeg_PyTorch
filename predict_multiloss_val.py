@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import Path
 from datetime import datetime
+import csv
 
 import numpy as np
 import torch
@@ -191,10 +192,19 @@ if __name__ == "__main__":
 
     logging.info("Model loaded !")
 
+    #Create new csv
+
+    f = open(dir_result + str('/percentages.csv'), 'w')
+    csvwriter = csv.writer(f)
+    csvwriter.writerow(['Image ID', 'Actual perc', 'Val Predicted perc'])
+
+    percs_gt = val_dataset.getPercsDict('')
+
     for fname in val_dataset.get_filenames():
 
         net.eval()
         im_file = glob(self.dir_img + fname + '.*')
+        print(str(im_file))
         assert len(im_file) == 1, \
             f'Either no image or multiple images found for the ID {idx}: {img_file}'
         img = Image.open(im_file[0])
@@ -207,11 +217,17 @@ if __name__ == "__main__":
         #Write predictions
 
         if not args.no_save:
-            out_fn = '{}/'.format(dir_result)
+            out_fn = '{}/{}'.format(dir_result, fname)
             result_im = imrecon_to_image(rec_im)
             result_mask = mask_to_image(mask)
-            result_im.save(out_fn)
-            result_mask.save(out_fn)
+            result_im.save('{}_RI.jpg'.format(out_fn))
+            result_mask.save('{}_M.jpg'.format(out_fn))
+
+            key = '{}.jpg'.format(fname)
+
+            pred_perc = torch.mean(torch.squeeze(mask), (1,2))
+            pred_perc = torch.unsqueeze(pred_perc, 1)
+            csvwriter.writerow([str(fname), str(percs_gt[key]), str(pred_perc)])
 
             logging.info("Mask saved to {}".format(out_files[i]))
 
