@@ -121,10 +121,11 @@ def imrecon_to_image(img):
 def mask_to_image(mask):
     
     #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
-    print(mask.shape, type(mask))
+    # print(mask.shape, type(mask))
     # mask = mask.transpose((1,2,0))
     # thres_mask = mask > 0.3
     # print(mask.shape, type(mask))
+    mask = np.clip(mask, 0, 1)
     return Image.fromarray((mask * 255).astype(np.uint8), 'L')
     # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
 
@@ -155,7 +156,7 @@ def get_image_filenames(dataset):
 if __name__ == "__main__":
     args = get_args()
     in_files = args.input
-    val_percent = 10
+    val_percent = 0.1
     batch_size = 2
 
     torch.manual_seed(args.manual_seed)
@@ -173,8 +174,9 @@ if __name__ == "__main__":
     os.makedirs(dir_result, exist_ok = True)
 
     petsDataset = PetsReconDataset(dir_img, dir_mask, args.scale)
+    # print(petsDataset.__len__())
 
-    train_loader, val_loader = get_dataloaders(dataset, val_percent)
+    train_loader, val_loader = get_dataloaders(petsDataset, val_percent, batch_size)
 
     # train_dataset, val_dataset = get_datasets(petsDataset, val_percent)
 
@@ -195,7 +197,7 @@ if __name__ == "__main__":
 
     #Create new csv
 
-    f = open(dir_result + str('/percentages.csv'), 'w')
+    f = open(dir_result + str('/AA_percentages.csv'), 'w')
     csvwriter = csv.writer(f)
     csvwriter.writerow(['Image ID', 'Actual perc', 'Val Predicted perc'])
 
@@ -221,10 +223,10 @@ if __name__ == "__main__":
     #         out_fn = '{}/{}'.format(dir_result, fname)
     #         result_im = imrecon_to_image(rec_im)
     #         result_mask = mask_to_image(mask)
-    #         result_im.save('{}_RI.jpg'.format(out_fn))
-    #         result_mask.save('{}_M.jpg'.format(out_fn))
+    #         result_im.save('{}_RI.png'.format(out_fn))
+    #         result_mask.save('{}_M.png'.format(out_fn))
 
-    #         key = '{}.jpg'.format(fname)
+    #         key = '{}.png'.format(fname)
 
     #         pred_perc = torch.mean(torch.squeeze(mask), (1,2))
     #         pred_perc = torch.unsqueeze(pred_perc, 1)
@@ -236,37 +238,67 @@ if __name__ == "__main__":
     for batch in val_loader:
         net.eval()
         imgs = batch['image']
-        for img in imgs
+        imgs = imgs.to(device=device, dtype=torch.float32)
+        for i in range(batch_size):
             with torch.no_grad():
+
+                # print(imgs.shape, imgs[i].shape)
+                img = torch.unsqueeze(imgs[i], 0)
+                # print(img.shape)
+                # print(type(imgs[i]))
+                # img = petsDataset.preprocess(imgs[i], args.scale, isImage=True)
                 pred_recon_img, pred_mask = net(img)
 
-                print('ReconIM shape:', pred_im.shape)
-                print('Mask shape:', pred_mask.shape)
+                # print('ReconIM shape:', pred_recon_img.shape)
+                # print('Mask shape:', pred_mask.shape)
 
                 # if net.n_classes > 1:
                 #     im_probs = F.softmax(output, dim=1)
                 # else:
                 #     im_probs = torch.sigmoid(output)
 
-                im_probs = pred_im.squeeze(0)
-                mask_probs = pred_mask.squeeze(0)
+                # im_probs = pred_recon_img.squeeze(0)
+                # mask_probs = pred_mask.squeeze(0)
 
 
-                tf = transforms.Compose(
-                    [
-                        transforms.ToPILImage(),
-                        transforms.Resize(full_img.size[1]),
-                        transforms.ToTensor()
-                    ]
-                )
+                # tf = transforms.Compose(
+                #     [
+                #         transforms.ToPILImage(),
+                #         transforms.Resize(imgs.size[1]),
+                #         transforms.ToTensor()
+                #     ]
+                # )
 
-                im_probs = tf(im_probs.cpu())
-                mask_probs = tf(mask_probs.cpu())
-                full_im = im_probs.squeeze().cpu().numpy()
-                print('mask_probs shape:', mask_probs.shape)
-                full_mask = mask_probs.squeeze().cpu().numpy()
+                # im_probs = tf(im_probs.cpu())
+                # mask_probs = tf(mask_probs.cpu())
+                # full_im = im_probs.squeeze().cpu().numpy()
+                # # print('mask_probs shape:', mask_probs.shape)
+                # full_mask = mask_probs.squeeze().cpu().numpy()
 
-        
+            fname = batch['image_ID'][i]
+            # print(fname)
+            out_fn = '{}/{}'.format(dir_result, fname)
+            # print(out_fn)
+            # print(pred_mask.cpu().numpy().shape)
+            result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
+            result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
+            result_im.save('{}_RI.png'.format(out_fn))
+            result_mask.save('{}_M.png'.format(out_fn))
+
+            key = '{}.png'.format(fname)
+            print(key)
+            # print(list(percs_gt.items())[:3])
+
+            pred_perc = torch.mean(torch.squeeze(pred_mask, 0), (1,2))
+            pred_perc = torch.unsqueeze(pred_perc, 1)
+            csvwriter.writerow([str(fname), str(percs_gt[key]), str(pred_perc.item())])
+
+            logging.info("Mask saved to {}_M.png".format(out_fn))
+
+
+    print("Validation Run Complete")
+    f.close()
+
 
     # out_files = get_output_filenames(args)
 
