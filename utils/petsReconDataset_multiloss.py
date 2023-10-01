@@ -40,6 +40,9 @@ class PetsReconDataset(Dataset):
         # print(x)
         return x
 
+    def get_filenames(self):
+        return self.ids
+
 
     @classmethod
     def preprocess(cls, pil_img, scale, isImage):
@@ -122,6 +125,7 @@ class PetsReconDataset(Dataset):
         maskPerc = self.percsDict[mask_percF]
 
         return {
+            'image_ID': idx,
             'image': torch.from_numpy(img).type(torch.FloatTensor),
             'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
             'mask_perc': torch.Tensor([maskPerc])

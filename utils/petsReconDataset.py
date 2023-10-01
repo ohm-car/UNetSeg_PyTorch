@@ -26,6 +26,9 @@ class PetsReconDataset(Dataset):
     def __len__(self):
         return len(self.ids)
 
+    def get_filenames(self):
+        return self.ids
+
 
     @classmethod
     def preprocess(cls, pil_img, scale, isImage):
