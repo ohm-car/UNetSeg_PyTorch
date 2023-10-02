@@ -292,11 +292,11 @@ if __name__ == "__main__":
             result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
             result_median = mask_median(pred_mask)
             result_rounded = rounded_mask(pred_mask)
-            result_rounded = mask_to_image(result_rounded.squeeze().cpu().numpy())
+            result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
 
             result_im.save('{}_RI.png'.format(out_fn))
             result_mask.save('{}_M.png'.format(out_fn))
-            result_rounded.save('{}_RM.png'.format(out_fn))
+            result_rounded_im.save('{}_RM.png'.format(out_fn))
 
             key = '{}.png'.format(fname)
             print(key)
