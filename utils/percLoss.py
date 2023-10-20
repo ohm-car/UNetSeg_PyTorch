@@ -30,6 +30,11 @@ class percLoss(nn.Module):
         # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)
         l1loss = nn.L1Loss()
+        reg = self.regularize(pred_mask)
         loss = l1loss(pred_perc, target)
 
         return loss
+
+    def regularize(self, pred_mask):
+
+        return torch.mean(1 / (1 + torch.exp(torch.abs(pred_mask - 0.5)))) - (1 / (1 + torch.exp(torch.tensor(0.5))))
