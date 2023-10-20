@@ -152,6 +152,14 @@ def get_image_filenames(dataset):
 
     return dataset.get_filenames()
 
+def mask_median(mask):
+    median = torch.median(mask)
+    return median
+
+def rounded_mask(mask):
+    mask = torch.round(mask)
+    return mask
+
 
 if __name__ == "__main__":
     args = get_args()
@@ -199,7 +207,7 @@ if __name__ == "__main__":
 
     f = open(dir_result + str('/AA_percentages.csv'), 'w')
     csvwriter = csv.writer(f)
-    csvwriter.writerow(['Image ID', 'Actual perc', 'Val Predicted perc'])
+    csvwriter.writerow(['Image ID', 'Actual perc', 'Val Predicted perc', 'Val Rounded perc', 'Median'])
 
     percs_gt = petsDataset.getPercsDict('')
 
@@ -282,8 +290,13 @@ if __name__ == "__main__":
             # print(pred_mask.cpu().numpy().shape)
             result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
             result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
+            result_median = mask_median(pred_mask)
+            result_rounded = rounded_mask(pred_mask)
+            result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
+
             result_im.save('{}_RI.png'.format(out_fn))
             result_mask.save('{}_M.png'.format(out_fn))
+            result_rounded_im.save('{}_RM.png'.format(out_fn))
 
             key = '{}.png'.format(fname)
             print(key)
@@ -291,7 +304,11 @@ if __name__ == "__main__":
 
             pred_perc = torch.mean(torch.squeeze(pred_mask, 0), (1,2))
             pred_perc = torch.unsqueeze(pred_perc, 1)
-            csvwriter.writerow([str(fname), str(percs_gt[key]), str(pred_perc.item())])
+
+            pred_perc_rounded = torch.mean(torch.squeeze(result_rounded, 0), (1,2))
+            pred_perc_rounded = torch.unsqueeze(pred_perc_rounded, 1)
+            csvwriter.writerow([str(fname), str(percs_gt[key]), str(pred_perc.item()), 
+                str(pred_perc_rounded.item()), str(result_median.item())])
 
             logging.info("Mask saved to {}_M.png".format(out_fn))
 
