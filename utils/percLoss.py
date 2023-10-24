@@ -33,7 +33,7 @@ class percLoss(nn.Module):
         reg = self.regularize(pred_mask)
         loss = l1loss(pred_perc, target)
 
-        return loss
+        return loss + reg
 
     def regularize(self, pred_mask):
 
