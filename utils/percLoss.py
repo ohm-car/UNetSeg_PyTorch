@@ -30,11 +30,22 @@ class percLoss(nn.Module):
         # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)
         l1loss = nn.L1Loss()
-        reg = self.regularize(pred_mask)
+        # reg1 = self.omkar_regularize(pred_mask)
+        # reg1 = self.edward_regularize(pred_mask)
+        # reg1 = self.bc_entropy(pred_mask)
         loss = l1loss(pred_perc, target)
 
-        return loss + reg
+        return loss
 
-    def regularize(self, pred_mask):
+    def omkar_regularize(self, pred_mask):
 
         return torch.mean(1 / (1 + torch.exp(torch.abs(pred_mask - 0.5)))) - (1 / (1 + torch.exp(torch.tensor(0.5))))
+        # return torch.mean(1 / (1 + torch.exp(torch.abs(pred_mask - 0.5))))
+
+    def edward_regularize(self, pred_mask):
+
+        return torch.pow(torch.tensor(0.5), 2) - torch.mean(torch.pow(0.5 - pred_mask, 2))
+
+    def bc_entropy(self, pred_mask):
+        targets = torch.round(pred_mask)
+        return F.binary_cross_entropy(pred_mask, targets)
