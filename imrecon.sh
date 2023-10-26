@@ -6,8 +6,13 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_6000
+<<<<<<< HEAD
 #SBATCH --output=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/mlseg_run_4.out
 #SBATCH --error=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/mlseg_run_4.err
+=======
+#SBATCH --output=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/mlseg_r1.out
+#SBATCH --error=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/mlseg_r1.err
+>>>>>>> c46dd8b (Fix sigmoid/Add regularization)
 
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
