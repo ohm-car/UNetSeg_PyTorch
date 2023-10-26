@@ -35,7 +35,7 @@ class percLoss(nn.Module):
         # reg1 = self.bc_entropy(pred_mask)
         loss = l1loss(pred_perc, target)
 
-        return loss + reg1
+        return loss
 
     def omkar_regularize(self, pred_mask):
 
