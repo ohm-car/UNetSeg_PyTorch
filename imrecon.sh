@@ -8,8 +8,6 @@
 #SBATCH --constraint=rtx_6000
 #SBATCH --output=output_%j.log
 #SBATCH --error=output_%j.err
-#SBATCH --output=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/mlseg_r4.out
-#SBATCH --error=/nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/mlseg_r4.err
 
 DT=`date +"%m-%d_%H-%M"`
 
