@@ -5,7 +5,7 @@ from utils.percLoss import percLoss
 from dice_loss import dice_coeff
 
 
-def eval_net(net, loader, device):
+def eval_net(net, loader, device, regularizer):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
     mask_type = torch.float32 if net.n_classes == 1 else torch.long
@@ -26,14 +26,14 @@ def eval_net(net, loader, device):
 
             if net.n_classes > 1:
                 recon_loss_batch = F.l1_loss(pred_recon_img, recon_img).item()
-                pcLossCriterion = percLoss(threshold_prob = 0.9)
+                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
                 mask_loss_batch = pcLossCriterion(pred_mask, true_perc).item()
                 recon_loss += recon_loss_batch
                 mask_loss += mask_loss_batch
                 tot += recon_loss_batch + mask_loss_batch
             else:
                 recon_loss_batch = F.l1_loss(pred_recon_img, recon_img).item()
-                pcLossCriterion = percLoss(threshold_prob = 0.9)
+                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
                 mask_loss_batch = pcLossCriterion(pred_mask, true_perc).item()
                 recon_loss += recon_loss_batch
                 mask_loss += mask_loss_batch
