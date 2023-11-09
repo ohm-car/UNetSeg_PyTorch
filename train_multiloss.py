@@ -37,7 +37,8 @@ def train_net(net,
               lr=0.001,
               val_percent=0.1,
               save_cp=True,
-              img_scale=0.5):
+              img_scale=0.5,
+              regularizer=None):
 
     dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
@@ -61,6 +62,7 @@ def train_net(net,
         Checkpoints:     {save_cp}
         Device:          {device.type}
         Images scaling:  {img_scale}
+        Regularizer:     {regularizer}
     ''')
 
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
@@ -95,7 +97,7 @@ def train_net(net,
                 pred_recon_img, pred_mask = net(imgs)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
                 # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
-                pcLossCriterion = percLoss(threshold_prob = 0.9)
+                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
                 # pcLossCriterion = nn.L1Loss()
 
                 loss = weight_recon_loss * criterion(pred_recon_img, recon_img)
@@ -122,7 +124,7 @@ def train_net(net,
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device)
+                    val_score = eval_net(net, val_loader, device, regularizer)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
@@ -173,6 +175,8 @@ def get_args():
                         help='Percent of the data that is used as validation (0-100)')
     parser.add_argument('-ms', '--manualSeed', metavar='MS', type=int, default=0,
                         help='Manual Seed for reproducability', dest='manual_seed')
+    parser.add_argument('-r', '--regularization', metavar='R', type=str, default=None,
+                        help='Regularizer', dest='reg')
 
     return parser.parse_args()
 
@@ -224,7 +228,8 @@ if __name__ == '__main__':
                   device=device,
                   img_scale=args.scale,
                   val_percent=args.val / 100,
-                  save_freq = args.saveFreq)
+                  save_freq = args.saveFreq,
+                  regularizer = args.reg)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')

@@ -5,10 +5,12 @@ from torch.autograd import Variable
 
 class percLoss(nn.Module):
 
-    def __init__(self, threshold_prob=0.9, num_classes=1):
+    def __init__(self, threshold_prob=0.9, num_classes=1, regularizer=None):
         super().__init__()
         self.threshold_prob = threshold_prob
         self.num_classes = num_classes
+        self.wr = 0.01
+        self.regularizer = regularizer
         # self.alpha = alpha
         # self.beta = beta
         # self.sim = F.cosine_similarity()
@@ -30,12 +32,29 @@ class percLoss(nn.Module):
         # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)
         l1loss = nn.L1Loss()
-        # reg1 = self.omkar_regularize(pred_mask)
-        # reg1 = self.edward_regularize(pred_mask)
-        reg1 = self.bc_entropy(pred_mask)
+        # reg_loss = self.omkar_regularize(pred_mask)
+        # reg_loss = self.edward_regularize(pred_mask)
+        # reg_loss = self.bc_entropy(pred_mask)
+
+        reg_loss = self.regularize(self.regularizer, pred_mask)
+
+        reg = self.wr * reg_loss
+
         loss = l1loss(pred_perc, target)
 
-        return loss + reg1
+        return loss + reg
+
+    def regularize(self, regularizer, pred_mask):
+
+        match self.regularizer:
+            case None:
+                return 0
+            case 'omkar':
+                return self.omkar_regularize(pred_mask)
+            case 'edward':
+                return self.edward_regularize(pred_mask)
+            case 'bce':
+                return self.bc_entropy(pred_mask)
 
     def omkar_regularize(self, pred_mask):
 
