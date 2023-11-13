@@ -9,7 +9,7 @@ class percLoss(nn.Module):
         super().__init__()
         self.threshold_prob = threshold_prob
         self.num_classes = num_classes
-        self.wr = 0.01
+        self.wr = 0.1
         self.regularizer = regularizer
         # self.alpha = alpha
         # self.beta = beta
