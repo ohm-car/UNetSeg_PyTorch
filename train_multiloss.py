@@ -38,7 +38,8 @@ def train_net(net,
               val_percent=0.1,
               save_cp=True,
               img_scale=0.5,
-              regularizer=None):
+              regularizer=None,
+              regularizer_weight=0.1):
 
     dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
@@ -54,15 +55,16 @@ def train_net(net,
     global_step = 0
 
     logging.info(f'''Starting training:
-        Epochs:          {epochs}
-        Batch size:      {batch_size}
-        Learning rate:   {lr}
-        Training size:   {n_train}
-        Validation size: {n_val}
-        Checkpoints:     {save_cp}
-        Device:          {device.type}
-        Images scaling:  {img_scale}
-        Regularizer:     {regularizer}
+        Epochs:             {epochs}
+        Batch size:         {batch_size}
+        Learning rate:      {lr}
+        Training size:      {n_train}
+        Validation size:    {n_val}
+        Checkpoints:        {save_cp}
+        Device:             {device.type}
+        Images scaling:     {img_scale}
+        Regularizer:        {regularizer}
+        Regularizer Weight: {regularizer_weight}
     ''')
 
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
@@ -97,7 +99,7 @@ def train_net(net,
                 pred_recon_img, pred_mask = net(imgs)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
                 # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
-                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
+                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight)
                 # pcLossCriterion = nn.L1Loss()
 
                 loss = weight_recon_loss * criterion(pred_recon_img, recon_img)
@@ -177,6 +179,8 @@ def get_args():
                         help='Manual Seed for reproducability', dest='manual_seed')
     parser.add_argument('-r', '--regularization', metavar='R', type=str, default=None,
                         help='Regularizer', dest='reg')
+    parser.add_argument('-rw', '--regularizer-weight', metavar='RW', type=float, nargs='?', default=0.1,
+                        help='Learning rate', dest='rw')
 
     return parser.parse_args()
 
@@ -229,7 +233,8 @@ if __name__ == '__main__':
                   img_scale=args.scale,
                   val_percent=args.val / 100,
                   save_freq = args.saveFreq,
-                  regularizer = args.reg)
+                  regularizer = args.reg,
+                  regularizer_weight = args.rw)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')

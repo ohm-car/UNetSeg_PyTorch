@@ -5,11 +5,11 @@ from torch.autograd import Variable
 
 class percLoss(nn.Module):
 
-    def __init__(self, threshold_prob=0.9, num_classes=1, regularizer=None):
+    def __init__(self, threshold_prob=0.9, num_classes=1, regularizer=None, regularizer_weight=0.1):
         super().__init__()
         self.threshold_prob = threshold_prob
         self.num_classes = num_classes
-        self.wr = 0.1
+        self.rw = regularizer_weight
         self.regularizer = regularizer
         # self.alpha = alpha
         # self.beta = beta
@@ -38,7 +38,7 @@ class percLoss(nn.Module):
 
         reg_loss = self.regularize(self.regularizer, pred_mask)
 
-        reg = self.wr * reg_loss
+        reg = self.rw * reg_loss
 
         loss = l1loss(pred_perc, target)
 
