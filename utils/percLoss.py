@@ -2,15 +2,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+from torch.distributions.bernoulli import Bernoulli
 
 class percLoss(nn.Module):
 
-    def __init__(self, threshold_prob=0.9, num_classes=1, regularizer=None, regularizer_weight=0.1):
+    def __init__(self, threshold_prob=0.9, num_classes=1, regularizer=None, regularizer_weight=0.1, sampler=None):
         super().__init__()
+        # threshold_prob hopefully to be used later
         self.threshold_prob = threshold_prob
+
         self.num_classes = num_classes
         self.rw = regularizer_weight
         self.regularizer = regularizer
+        self.sampler = sampler
         # self.alpha = alpha
         # self.beta = beta
         # self.sim = F.cosine_similarity()
@@ -21,6 +25,10 @@ class percLoss(nn.Module):
 
         #target: Value between 0 and 1, obtained from CSV
         #pred_mask: A tensor with the shape of the image, and channels equal to number of classes. For now 1 channel.
+
+        # Bernoulli differentiable sampler, If required. Not used by default.
+        if(self.sampler == 'bernoulli'):
+            pred_mask = self.bernoulli_sample(pred_mask)
 
         # temp = pred_mask
         # print(temp)
@@ -68,3 +76,9 @@ class percLoss(nn.Module):
     def bc_entropy(self, pred_mask):
         targets = torch.round(pred_mask)
         return F.binary_cross_entropy(pred_mask, targets)
+
+    def bernoulli_sample(self, pred_mask):
+
+        sampled_pred_mask = Bernoulli(pred_mask)
+
+        return sampled_pred_mask.rsample()

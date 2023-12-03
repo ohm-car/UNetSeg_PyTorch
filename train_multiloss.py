@@ -29,7 +29,8 @@ tm = datetime.datetime.now()
 dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
 
-def train_net(net,
+def train_net(args,
+              net,
               device,
               save_freq,
               epochs=5,
@@ -65,6 +66,7 @@ def train_net(net,
         Images scaling:     {img_scale}
         Regularizer:        {regularizer}
         Regularizer Weight: {regularizer_weight}
+        Mask Sampling:      {args.sp}
     ''')
 
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
@@ -99,7 +101,7 @@ def train_net(net,
                 pred_recon_img, pred_mask = net(imgs)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
                 # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
-                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight)
+                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
                 # pcLossCriterion = nn.L1Loss()
 
                 loss = weight_recon_loss * criterion(pred_recon_img, recon_img)
@@ -121,7 +123,7 @@ def train_net(net,
                 pbar.update(imgs.shape[0])
                 global_step += 1
                 # print(global_step, n_train, batch_size)
-                if global_step % (n_train // (1 * batch_size) + 1) == 0:
+                if global_step % (n_train // (100 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -181,6 +183,8 @@ def get_args():
                         help='Regularizer', dest='reg')
     parser.add_argument('-rw', '--regularizer-weight', metavar='RW', type=float, nargs='?', default=0.1,
                         help='Learning rate', dest='rw')
+    parser.add_argument('-sp', '--sampling', metavar='SP', type=str, nargs='?', default=None,
+                        help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
 
     return parser.parse_args()
 
@@ -225,7 +229,8 @@ if __name__ == '__main__':
     # cudnn.benchmark = True
 
     try:
-        train_net(net=net,
+        train_net(args=args,
+                  net=net,
                   epochs=args.epochs,
                   batch_size=args.batchsize,
                   lr=args.lr,
