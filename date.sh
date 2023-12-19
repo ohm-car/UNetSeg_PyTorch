@@ -10,4 +10,3 @@
 #SBATCH --error=test.err
 
 python hello.py
-testgit

@@ -12,7 +12,7 @@ import csv
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
-class PetsReconDataset(Dataset):
+class PascalVOCDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, percs_dir, scale=1, mask_suffix=''):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
