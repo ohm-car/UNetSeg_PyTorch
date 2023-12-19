@@ -186,6 +186,8 @@ def get_args():
                         help='Learning rate', dest='rw')
     parser.add_argument('-sp', '--sampling', metavar='SP', type=str, nargs='?', default=None,
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
+    parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=1,
+                        help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
 
     return parser.parse_args()
 
@@ -212,7 +214,7 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=1, bilinear=True)
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
