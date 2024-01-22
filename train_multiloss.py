@@ -16,7 +16,8 @@ from eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-from utils.pascalVOC_multiloss import PascalVOCDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
@@ -42,7 +43,7 @@ def train_net(args,
               regularizer=None,
               regularizer_weight=0.1):
 
-    dataset = PascalVOCDataset(dir_img, dir_mask, img_scale)
+    dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -227,7 +228,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    # torchsummary.summary(net, input_size=(3, 160, 160))
+    torchsummary.summary(net, input_size=(3, 160, 160))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 

@@ -128,5 +128,5 @@ class PetsReconDataset(Dataset):
             'image_ID': idx,
             'image': torch.from_numpy(img).type(torch.FloatTensor),
             'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
-            'mask_perc': torch.Tensor([maskPerc, 0.95*maskPerc, 1.1*maskPerc])
+            'mask_perc': torch.Tensor([maskPerc])
         }
