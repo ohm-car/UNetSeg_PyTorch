@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+from multiprocessing import cpu_count
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +17,7 @@ from eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
+# from utils.pascalVOC_multiloss import PascalVOCDataset
 from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
@@ -49,8 +51,8 @@ def train_net(args,
     # print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(cpu_count(), 1), pin_memory=True)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(cpu_count(), 1), pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
@@ -204,6 +206,7 @@ if __name__ == '__main__':
         device = torch.device('cpu')
 
     logging.info(f'Using device {device}')
+    logging.info(f'CPU workers available: {cpu_count()}')
 
     torch.manual_seed(args.manual_seed)
     logging.info(f'Set seed for reproducability: {args.manual_seed}')
@@ -227,7 +230,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    # torchsummary.summary(net, input_size=(3, 160, 160))
+    torchsummary.summary(net, input_size=(3, 160, 160))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
