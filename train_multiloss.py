@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+from multiprocessing import cpu_count
 from pathlib import Path
 
 import numpy as np
@@ -50,8 +51,8 @@ def train_net(args,
     # print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(cpu_count(), 1), pin_memory=True)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(cpu_count(), 1), pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
@@ -205,6 +206,7 @@ if __name__ == '__main__':
         device = torch.device('cpu')
 
     logging.info(f'Using device {device}')
+    logging.info(f'CPU workers available: {cpu_count()}')
 
     torch.manual_seed(args.manual_seed)
     logging.info(f'Set seed for reproducability: {args.manual_seed}')
