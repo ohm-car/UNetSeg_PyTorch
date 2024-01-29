@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+from multiprocessing import cpu_count
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +17,7 @@ from eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
+# from utils.pascalVOC_multiloss import PascalVOCDataset
 from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
@@ -49,8 +51,8 @@ def train_net(args,
     # print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(cpu_count(), 1), pin_memory=True)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(cpu_count(), 1), pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
@@ -186,6 +188,8 @@ def get_args():
                         help='Learning rate', dest='rw')
     parser.add_argument('-sp', '--sampling', metavar='SP', type=str, nargs='?', default=None,
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
+    parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=1,
+                        help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
 
     return parser.parse_args()
 
@@ -202,6 +206,7 @@ if __name__ == '__main__':
         device = torch.device('cpu')
 
     logging.info(f'Using device {device}')
+    logging.info(f'CPU workers available: {cpu_count()}')
 
     torch.manual_seed(args.manual_seed)
     logging.info(f'Set seed for reproducability: {args.manual_seed}')
@@ -212,7 +217,7 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=1, bilinear=True)
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
@@ -225,7 +230,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    # torchsummary.summary(net, input_size=(3, 160, 160))
+    torchsummary.summary(net, input_size=(3, 160, 160))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
