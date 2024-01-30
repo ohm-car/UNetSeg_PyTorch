@@ -51,8 +51,8 @@ def train_net(args,
     # print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(cpu_count(), 1), pin_memory=True)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(cpu_count(), 1), pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(min(4, cpu_count()), 1), pin_memory=True)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(min(4, cpu_count()), 1), pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
