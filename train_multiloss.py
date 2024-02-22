@@ -23,9 +23,9 @@ from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
 root_dir = Path().resolve().parent
-dir_img = os.path.join(root_dir, 'data/images/')
+dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
 print(dir_img)
-dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
+dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
 print(dir_mask)
 tm = datetime.datetime.now()
 dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
