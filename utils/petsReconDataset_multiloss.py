@@ -99,7 +99,7 @@ class PetsReconDataset(Dataset):
         idx = self.ids[i]
         # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
         mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
-        print(mask_file)
+        print(mask_file[0])
         img_file = glob(self.imgs_dir + idx + '.*')
 
         assert len(mask_file) == 1, \
