@@ -102,11 +102,11 @@ class PetsReconDataset(Dataset):
         # print(mask_file[0])
         img_file = glob(self.imgs_dir + idx + '.*')
 
-        assert len(mask_file) == 1, \
-            f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
-        assert len(img_file) == 1, \
-            f'Either no image or multiple images found for the ID {idx}: {img_file}'
-        mask = Image.open(mask_file[0])
+        # assert len(mask_file) == 1, \
+            # f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
+        # assert len(img_file) == 1, \
+            # f'Either no image or multiple images found for the ID {idx}: {img_file}'
+        # mask = Image.open(mask_file[0])
         mask_percF = mask_file[0].split('/')[-1]
         # print(mask.size, mask.mode)
         # mask = self.processMask(mask)
@@ -118,8 +118,8 @@ class PetsReconDataset(Dataset):
         # print(img.size)
         # print(type(mask))
 
-        assert img.size == mask.size, \
-            f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
+        # assert img.size == mask.size, \
+            # f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
         img = self.preprocess(img, self.scale, isImage = True)
         # mask = self.preprocess(mask, self.scale, isImage = False)
