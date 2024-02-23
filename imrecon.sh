@@ -6,8 +6,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_6000
-#SBATCH --output=/scratch/$SLURM_JOBID/output_%j.log
-#SBATCH --error=/scratch/$SLURM_JOBID/output_%j.err
+#SBATCH --output=output_%j.log
+#SBATCH --error=output_%j.err
 
 DT=`date +"%m-%d_%H-%M"`
 
