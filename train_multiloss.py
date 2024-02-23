@@ -22,13 +22,17 @@ from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
-root_dir = Path().resolve().parent
-dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-print(dir_img)
-dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
-print(dir_mask)
+# root_dir = Path().resolve().parent
+# dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+# dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+# tm = datetime.datetime.now()
+# dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+
+root_dir = None
+dir_img = None
+dir_mask = None
 tm = datetime.datetime.now()
-dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+dir_checkpoint = None
 
 
 def train_net(args,
@@ -44,6 +48,13 @@ def train_net(args,
               regularizer=None,
               regularizer_weight=0.1):
 
+    root_dir = args.rd
+    print(root_dir, type(root_dir))
+    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+    tm = datetime.datetime.now()
+    dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+
     dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
@@ -56,7 +67,7 @@ def train_net(args,
     # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True)
     # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2, pin_memory=True)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 6, pin_memory=True)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
@@ -195,6 +206,8 @@ def get_args():
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
     parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=1,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
+    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
+                        help='Root Directory for dataset', dest='rd')
 
     return parser.parse_args()
 
@@ -215,6 +228,9 @@ if __name__ == '__main__':
 
     torch.manual_seed(args.manual_seed)
     logging.info(f'Set seed for reproducability: {args.manual_seed}')
+
+    root_dir = 'Test'+str(cpu_count())
+    print(root_dir)
 
     # Change here to adapt to your data
     # n_channels=3 for RGB images

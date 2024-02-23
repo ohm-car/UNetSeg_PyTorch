@@ -6,8 +6,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_6000
-#SBATCH --output=output_%j.log
-#SBATCH --error=output_%j.err
+#SBATCH --output=/scratch/$SLURM_JOBID/output_%j.log
+#SBATCH --error=/scratch/$SLURM_JOBID/output_%j.err
 
 DT=`date +"%m-%d_%H-%M"`
 
@@ -15,8 +15,11 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 
 source activate unet
 
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_multiloss.py -b=160 -e=60 -sf=10 -rw=0.1 -r='omkar'
-#python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_multiloss.py -b=160 -e=60 -sf=10
+cp /nfs/ada/oates/users/omkark1/Thesis_Work/Datasets.zip /scratch/$SLURM_JOBID
+unzip /scratch/$SLURM_JOBID/Datasets.zip -d /scratch/$SLURM_JOBID
 
-mv output_$SLURM_JOB_ID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/output_$DT.log
-mv output_$SLURM_JOB_ID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/output_$DT.err
+python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_multiloss.py -rd=/scratch/$SLURM_JOBID -b=160 -e=60 -sf=10 -rw=0.1 -r='omkar'
+#python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_multiloss.py -rd=/scratch/$SLURM_JOBID -b=160 -e=60 -sf=10
+
+mv /scratch/$SLURM_JOBID/output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/output_$DT.log
+mv /scratch/$SLURM_JOBID/output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/multiloss/output_$DT.err
