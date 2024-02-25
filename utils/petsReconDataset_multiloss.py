@@ -8,6 +8,7 @@ import logging
 import PIL
 from PIL import Image, ImageOps
 from torch.nn.functional import one_hot
+import torchvision.transforms as transforms
 import csv
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
@@ -19,6 +20,8 @@ class PetsReconDataset(Dataset):
         self.scale = scale
         self.mask_suffix = mask_suffix
         self.percsDict = self.getPercsDict(percs_dir)
+
+        self.transform = transforms.Compose([transforms.PILToTensor()])
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
@@ -45,35 +48,35 @@ class PetsReconDataset(Dataset):
         return self.ids
 
 
-    @classmethod
-    def preprocess(cls, pil_img, scale, isImage):
-        w, h = pil_img.size
-        newW, newH = int(scale * w), int(scale * h)
-        assert newW > 0 and newH > 0, 'Scale is too small'
-        pil_img = pil_img.resize((160, 160))
+    # @classmethod
+    # def preprocess(cls, pil_img, scale, isImage):
+    #     w, h = pil_img.size
+    #     newW, newH = int(scale * w), int(scale * h)
+    #     assert newW > 0 and newH > 0, 'Scale is too small'
+    #     pil_img = pil_img.resize((160, 160))
 
-        img_nd = np.array(pil_img)
+    #     img_nd = np.array(pil_img)
 
-        if len(img_nd.shape) == 2:
-            img_nd -= 1
-            # img_nd = np.expand_dims(img_nd, axis=2)
+    #     if len(img_nd.shape) == 2:
+    #         img_nd -= 1
+    #         # img_nd = np.expand_dims(img_nd, axis=2)
 
-        # if not isImage:
-            # img_nd = cls.onehot_initialization(cls, img_nd)
-            # img_nd -= 1
-            # img_nd = (np.arange(img_nd.max()+1) == img_nd[...,None]).astype(int)
-            # print(img_nd.shape)
+    #     # if not isImage:
+    #         # img_nd = cls.onehot_initialization(cls, img_nd)
+    #         # img_nd -= 1
+    #         # img_nd = (np.arange(img_nd.max()+1) == img_nd[...,None]).astype(int)
+    #         # print(img_nd.shape)
 
-        # HWC to CHW
+    #     # HWC to CHW
         
-        if isImage:
-            img_trans = img_nd.transpose((2, 0, 1))
-            if img_trans.max() > 1:
-                img_trans = img_trans / 255
-        else:
-            img_trans = img_nd
+    #     if isImage:
+    #         img_trans = img_nd.transpose((2, 0, 1))
+    #         if img_trans.max() > 1:
+    #             img_trans = img_trans / 255
+    #     else:
+    #         img_trans = img_nd
 
-        return img_trans
+    #     return img_trans
 
     # def processMask(self, pilmask):
 
@@ -94,6 +97,19 @@ class PetsReconDataset(Dataset):
     #     out = np.zeros(a.shape + (ncols,), dtype=int)
     #     out[self.all_idx(a, axis=2)] = 1
     #     return out
+
+    
+    def preprocess(self, pil_img):
+        w, h = pil_img.size
+
+        pil_img = pil_img.resize((160, 160))
+
+        imgT = self.transform(pil_img)
+
+        # imgT = imgT.permute(2, 0, 1)
+        imgT = imgT / 255
+
+        return imgT
 
     def __getitem__(self, i):
         idx = self.ids[i]
@@ -121,13 +137,15 @@ class PetsReconDataset(Dataset):
         # assert img.size == mask.size, \
             # f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
-        img = self.preprocess(img, self.scale, isImage = True)
+        img = self.preprocess(img)
         # mask = self.preprocess(mask, self.scale, isImage = False)
         maskPerc = self.percsDict[mask_percF]
 
         return {
             'image_ID': img_file[0] + idx,
-            'image': torch.from_numpy(img).type(torch.FloatTensor),
-            'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
+            # 'image': torch.from_numpy(img).type(torch.FloatTensor),
+            'image': img,
+            # 'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
+            'reconstructed_image': img,
             'mask_perc': torch.Tensor([maskPerc])
         }
