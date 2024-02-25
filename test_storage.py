@@ -66,7 +66,7 @@ def preprocess(pil_img):
 
     imgT = transform(pil_img)
 
-    img_trans = imgT.permute(2, 0, 1)
+    # img_trans = imgT.permute(2, 0, 1)
     img_trans = img_trans / 255
 
     return img_trans
