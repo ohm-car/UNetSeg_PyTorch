@@ -69,8 +69,12 @@ def train_net(args,
     # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True)
     # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
+<<<<<<< HEAD
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2)
 
+=======
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 6, pin_memory=True)
+>>>>>>> 41328a7 (Revert "Update train_multiloss.py")
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
@@ -107,10 +111,13 @@ def train_net(args,
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 # print("Started Batch Training!\n")
 =======
                 print('Loaded batch')
 >>>>>>> 6758522 (Update train_multiloss.py)
+=======
+>>>>>>> 41328a7 (Revert "Update train_multiloss.py")
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
@@ -149,10 +156,13 @@ def train_net(args,
                 pbar.update(imgs.shape[0])
                 global_step += 1
 <<<<<<< HEAD
+<<<<<<< HEAD
                 # print("Finished Batch Training!\n")
 =======
                 print('Processed batch')
 >>>>>>> 6758522 (Update train_multiloss.py)
+=======
+>>>>>>> 41328a7 (Revert "Update train_multiloss.py")
                 # print(global_step, n_train, batch_size)
                 if global_step % (n_train // (1 * batch_size) + 1) == 0:
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
