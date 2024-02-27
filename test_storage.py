@@ -60,16 +60,16 @@ transform = transforms.Compose([
 #     return img_trans
 
 def preprocess(pil_img):
-    w, h = pil_img.size
+    # w, h = pil_img.size
 
-    pil_img = pil_img.resize((160, 160))
+    # imgT = pil_img.resize((160, 160))
 
-    imgT = transform(pil_img)
+    imgT = transforms.PILToTensor(pil_img)
 
-    # img_trans = imgT.permute(2, 0, 1)
-    img_trans = img_trans / 255
+    # imgT = imgT.permute(2, 0, 1)
+    # imgT = imgT / 255
 
-    return img_trans
+    return None
 
 
 nas_imgs = os.listdir(nas_dir_img)
@@ -91,6 +91,7 @@ for i in nas_imgs:
 	# print(i)
 	try:
 		T = read_image(nas_dir_img + i, ImageReadMode.RGB)
+		# print(type(T))
 	except Exception:
 		pass
 		# print(i, e)

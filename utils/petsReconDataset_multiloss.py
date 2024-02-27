@@ -21,12 +21,13 @@ class PetsReconDataset(Dataset):
         self.mask_suffix = mask_suffix
         self.percsDict = self.getPercsDict(percs_dir)
 
-        self.transform = transforms.Compose([transforms.PILToTensor()])
+        # self.images = self.load_images(imgs_dir)
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
                     if not file.startswith('.')]
+        self.images = self.load_images(imgs_dir)
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
@@ -99,53 +100,105 @@ class PetsReconDataset(Dataset):
     #     return out
 
     
-    def preprocess(self, pil_img):
+    def preprocess(self, pil_img, transform):
         w, h = pil_img.size
 
         pil_img = pil_img.resize((160, 160))
 
-        imgT = self.transform(pil_img)
+        imgT = transform(pil_img)
 
         # imgT = imgT.permute(2, 0, 1)
         imgT = imgT / 255
 
         return imgT
 
+    def load_images(self, imgs_dir):
+
+        temp_images = dict()
+
+        transform = transforms.Compose([transforms.PILToTensor()])
+
+        print('Loading Dataset')
+
+        # for i in listdir(imgs_dir):
+        for i in self.ids:
+
+            img_file = glob(self.imgs_dir + i + '.*')
+
+            assert len(img_file) == 1, \
+                f'Either no image or multiple images found for the ID {idx}: {img_file}'
+
+            T = Image.open(img_file[0])
+            if T.mode != 'RGB':
+                T = T.convert(mode = 'RGB')
+
+            T = self.preprocess(T, transform)
+            # print(i)
+            temp_images[i] = T
+
+        print('Loaded Dataset')
+
+        return temp_images
+
     def __getitem__(self, i):
+
         idx = self.ids[i]
         # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
         mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
         # print(mask_file[0])
         img_file = glob(self.imgs_dir + idx + '.*')
 
-        # assert len(mask_file) == 1, \
-            # f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
-        # assert len(img_file) == 1, \
-            # f'Either no image or multiple images found for the ID {idx}: {img_file}'
         # mask = Image.open(mask_file[0])
         mask_percF = mask_file[0].split('/')[-1]
         # print(mask.size, mask.mode)
         # mask = self.processMask(mask)
-        img = Image.open(img_file[0])
-        if img.mode != 'RGB':
-            # print(img_file, img.mode)
-            img = img.convert(mode = 'RGB')
-            # print(img_file, img.mode)
-        # print(img.size)
-        # print(type(mask))
 
-        # assert img.size == mask.size, \
-            # f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
-
-        img = self.preprocess(img)
+        img = self.images[idx]
         # mask = self.preprocess(mask, self.scale, isImage = False)
         maskPerc = self.percsDict[mask_percF]
 
         return {
             'image_ID': img_file[0] + idx,
-            # 'image': torch.from_numpy(img).type(torch.FloatTensor),
             'image': img,
-            # 'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
             'reconstructed_image': img,
             'mask_perc': torch.Tensor([maskPerc])
         }
+
+    # def __getitem__(self, i):
+    #     idx = self.ids[i]
+    #     # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
+    #     mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
+    #     # print(mask_file[0])
+    #     img_file = glob(self.imgs_dir + idx + '.*')
+
+    #     assert len(mask_file) == 1, \
+    #         f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
+    #     assert len(img_file) == 1, \
+    #         f'Either no image or multiple images found for the ID {idx}: {img_file}'
+    #     mask = Image.open(mask_file[0])
+    #     mask_percF = mask_file[0].split('/')[-1]
+    #     # print(mask.size, mask.mode)
+    #     # mask = self.processMask(mask)
+    #     img = Image.open(img_file[0])
+    #     if img.mode != 'RGB':
+    #         # print(img_file, img.mode)
+    #         img = img.convert(mode = 'RGB')
+    #         # print(img_file, img.mode)
+    #     # print(img.size)
+    #     # print(type(mask))
+
+    #     assert img.size == mask.size, \
+    #         f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
+
+    #     img = self.preprocess(img)
+    #     # mask = self.preprocess(mask, self.scale, isImage = False)
+    #     maskPerc = self.percsDict[mask_percF]
+
+    #     return {
+    #         'image_ID': img_file[0] + idx,
+    #         # 'image': torch.from_numpy(img).type(torch.FloatTensor),
+    #         'image': img,
+    #         # 'reconstructed_image': torch.from_numpy(img).type(torch.FloatTensor),
+    #         'reconstructed_image': img,
+    #         'mask_perc': torch.Tensor([maskPerc])
+    #     }
