@@ -20,14 +20,14 @@ class PetsReconDataset(Dataset):
         self.scale = scale
         self.mask_suffix = mask_suffix
         self.percsDict = self.getPercsDict(percs_dir)
-
+        # print(self.percsDict)
         # self.images = self.load_images(imgs_dir)
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
                     if not file.startswith('.')]
-        self.images = self.load_images(imgs_dir)
+        self.images, self.percs = self.load_data(imgs_dir)
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
@@ -41,7 +41,7 @@ class PetsReconDataset(Dataset):
         reader = csv.reader(f)
 
         for row in reader:
-            x[row[0].split('/')[-1]] = float(row[1])
+            x[row[0].split('/')[-1].split('.')[0]] = float(row[1])
         # print(x)
         return x
 
@@ -112,9 +112,38 @@ class PetsReconDataset(Dataset):
 
         return imgT
 
-    def load_images(self, imgs_dir):
+    # def load_images(self, imgs_dir):
 
-        temp_images = dict()
+    #     temp_images = dict()
+
+    #     transform = transforms.Compose([transforms.PILToTensor()])
+
+    #     print('Loading Dataset')
+
+    #     # for i in listdir(imgs_dir):
+    #     for i in self.ids:
+
+    #         img_file = glob(self.imgs_dir + i + '.*')
+
+    #         assert len(img_file) == 1, \
+    #             f'Either no image or multiple images found for the ID {idx}: {img_file}'
+
+    #         T = Image.open(img_file[0])
+    #         if T.mode != 'RGB':
+    #             T = T.convert(mode = 'RGB')
+
+    #         T = self.preprocess(T, transform)
+    #         # print(i)
+    #         temp_images[i] = T
+
+    #     print('Loaded Dataset')
+
+    #     return temp_images
+
+    def load_data(self, imgs_dir):
+
+        temp_images = list()
+        temp_percs = list()
 
         transform = transforms.Compose([transforms.PILToTensor()])
 
@@ -134,34 +163,44 @@ class PetsReconDataset(Dataset):
 
             T = self.preprocess(T, transform)
             # print(i)
-            temp_images[i] = T
+            temp_images.append(T)
+            temp_percs.append(torch.Tensor([self.percsDict[i]]))
 
         print('Loaded Dataset')
 
-        return temp_images
+        return temp_images, temp_percs
+
+    # def __getitem__(self, i):
+
+    #     idx = self.ids[i]
+    #     # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
+    #     mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
+    #     # print(mask_file[0])
+    #     img_file = glob(self.imgs_dir + idx + '.*')
+
+    #     # mask = Image.open(mask_file[0])
+    #     mask_percF = mask_file[0].split('/')[-1]
+    #     # print(mask.size, mask.mode)
+    #     # mask = self.processMask(mask)
+
+    #     img = self.images[idx]
+    #     # mask = self.preprocess(mask, self.scale, isImage = False)
+    #     maskPerc = self.percsDict[mask_percF]
+
+    #     return {
+    #         'image_ID': img_file[0] + idx,
+    #         'image': img,
+    #         'reconstructed_image': img,
+    #         'mask_perc': torch.Tensor([maskPerc])
+    #     }
 
     def __getitem__(self, i):
 
-        idx = self.ids[i]
-        # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
-        mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
-        # print(mask_file[0])
-        img_file = glob(self.imgs_dir + idx + '.*')
-
-        # mask = Image.open(mask_file[0])
-        mask_percF = mask_file[0].split('/')[-1]
-        # print(mask.size, mask.mode)
-        # mask = self.processMask(mask)
-
-        img = self.images[idx]
-        # mask = self.preprocess(mask, self.scale, isImage = False)
-        maskPerc = self.percsDict[mask_percF]
-
         return {
-            'image_ID': img_file[0] + idx,
-            'image': img,
-            'reconstructed_image': img,
-            'mask_perc': torch.Tensor([maskPerc])
+            # 'image_ID': img_file[0] + idx,
+            'image': self.images[i],
+            'reconstructed_image': self.images[i],
+            'mask_perc': self.percs[i]
         }
 
     # def __getitem__(self, i):
