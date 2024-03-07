@@ -43,13 +43,15 @@ class percLoss(nn.Module):
 
         pred_perc = torch.mean(pred_mask, axis=(2,3))
         # print("Pred_Perc:", pred_perc)
+        # print("Target:", target)
 
         # print("Pred_Perc_Size:", pred_perc.size(), "Target_Size:", target.size())
 
         # print(temp2)
         # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)
-        l1loss = nn.L1Loss(reduction='sum')
+        # l1loss = nn.L1Loss(reduction='sum')
+        l1loss = nn.L1Loss()
         # reg_loss = self.omkar_regularize(pred_mask)
         # reg_loss = self.edward_regularize(pred_mask)
         # reg_loss = self.bc_entropy(pred_mask)
