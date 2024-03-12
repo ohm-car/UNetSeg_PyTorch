@@ -106,18 +106,9 @@ def train_net(args,
         epoch_loss = 0
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-                # print("Started Batch Training!\n")
-=======
-                print('Loaded batch')
->>>>>>> 6758522 (Update train_multiloss.py)
-=======
->>>>>>> 41328a7 (Revert "Update train_multiloss.py")
-=======
-                print('Loaded batch')
->>>>>>> 6758522 (Update train_multiloss.py)
+
+                # print('Loaded batch')
+                # print('Loaded batch')
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
@@ -155,19 +146,12 @@ def train_net(args,
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+
                 # print("Finished Batch Training!\n")
-=======
-                print('Processed batch')
->>>>>>> 6758522 (Update train_multiloss.py)
-=======
->>>>>>> 41328a7 (Revert "Update train_multiloss.py")
-=======
-                print('Processed batch')
->>>>>>> 6758522 (Update train_multiloss.py)
+                # print('Processed batch')
+                # print('Processed batch')
                 # print(global_step, n_train, batch_size)
+                
                 if global_step % (n_train // (1 * batch_size) + 1) == 0:
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
