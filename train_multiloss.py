@@ -227,6 +227,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     args = get_args()
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+<<<<<<< Updated upstream
     if torch.cuda.is_available():
         device = torch.device('cuda')
     elif torch.backends.mps.is_available():
@@ -234,6 +235,9 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
 
+=======
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+>>>>>>> Stashed changes
     logging.info(f'Using device {device}')
     logging.info(f'CPU workers available: {cpu_count()}')
 
