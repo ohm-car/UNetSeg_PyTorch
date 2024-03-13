@@ -110,7 +110,7 @@ def train_net(args,
                 # print('Loaded batch')
                 # print('Loaded batch')
                 # print("Started Batch Training!\n")
-                print('Loaded batch')
+                # print('Loaded batch')
 
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
@@ -155,7 +155,7 @@ def train_net(args,
                 # print('Processed batch')
                 
                 # print("Finished Batch Training!\n")
-                print('Processed batch')
+                # print('Processed batch')
 
                 # print(global_step, n_train, batch_size)
                 
