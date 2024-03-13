@@ -107,8 +107,6 @@ def train_net(args,
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
 
-                # print('Loaded batch')
-                # print('Loaded batch')
                 # print("Started Batch Training!\n")
                 # print('Loaded batch')
 
@@ -149,14 +147,9 @@ def train_net(args,
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
-
-                # print("Finished Batch Training!\n")
-                # print('Processed batch')
-                # print('Processed batch')
                 
                 # print("Finished Batch Training!\n")
                 # print('Processed batch')
-
                 # print(global_step, n_train, batch_size)
                 
                 if global_step % (n_train // (1 * batch_size) + 1) == 0:
