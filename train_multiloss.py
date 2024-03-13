@@ -107,8 +107,9 @@ def train_net(args,
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
 
+                # print("Started Batch Training!\n")
                 # print('Loaded batch')
-                # print('Loaded batch')
+
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
@@ -146,9 +147,8 @@ def train_net(args,
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
-
+                
                 # print("Finished Batch Training!\n")
-                # print('Processed batch')
                 # print('Processed batch')
                 # print(global_step, n_train, batch_size)
                 
