@@ -82,14 +82,6 @@ def optimize(trial,
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
-    # print(type(dataset),type(train),type(train.dataset))
-    # print("Train IDs:", train.dataset.ids)
-    # print("Val IDs:", val.dataset.ids)
-    # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(min(2, cpu_count()), 1), pin_memory=True)
-    # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(min(2, cpu_count()), 1), pin_memory=True, drop_last=True)
-    # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True)
-    # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
-
 
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
@@ -286,6 +278,8 @@ if __name__ == '__main__':
     torchsummary.summary(net, input_size=(3, 160, 160))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
+
+    train_loader, val_loader = get_dataloaders()
 
     try:
         train_net(args=args,
