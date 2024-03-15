@@ -23,23 +23,43 @@ from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
-root_dir = Path().resolve().parent
-dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-print(dir_img)
-dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
-print(dir_mask)
+# root_dir = Path().resolve().parent
+# dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+# dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+# tm = datetime.datetime.now()
+# dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+
+root_dir = None
+dir_img = None
+dir_mask = None
 tm = datetime.datetime.now()
-dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+dir_checkpoint = None
 
-# Tunable optuna hyperparams seem to be:
-# 1) regularizer
-# 2) regularizer weights
-# 3) loss weights
+def get_dataloaders(args,
+                    val_percent=0.1):
 
-def train_net(args,
+    root_dir = args.rd
+    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+
+
+    dataset = PetsReconDataset(dir_img, dir_mask)
+    n_val = int(len(dataset) * val_percent)
+    n_train = len(dataset) - n_val
+    train, val = random_split(dataset, [n_train, n_val])
+
+    train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True, num_workers = 2)
+    val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2, pin_memory=True)
+
+    return train_loader, val_loader
+
+def optimize(trial,
+              args,
               net,
               device,
               save_freq,
+              train_loader,
+              val_loader,
               epochs=5,
               batch_size=1,
               lr=0.001,
@@ -49,6 +69,15 @@ def train_net(args,
               regularizer=None,
               regularizer_weight=0.1):
 
+    root_dir = args.rd
+    # print(root_dir, type(root_dir))
+    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    # print(dir_img, type(dir_img))
+    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+    # print(dir_mask, type(dir_mask))
+    tm = datetime.datetime.now()
+    dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+
     dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
@@ -56,8 +85,14 @@ def train_net(args,
     # print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(cpu_count(), 1), pin_memory=True)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(cpu_count(), 1), pin_memory=True, drop_last=True)
+    # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers= max(min(2, cpu_count()), 1), pin_memory=True)
+    # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=max(min(2, cpu_count()), 1), pin_memory=True, drop_last=True)
+    # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True)
+    # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
+
+
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
@@ -92,6 +127,10 @@ def train_net(args,
         epoch_loss = 0
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
             for batch in train_loader:
+
+                # print("Started Batch Training!\n")
+                # print('Loaded batch')
+
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
@@ -129,7 +168,11 @@ def train_net(args,
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
+                
+                # print("Finished Batch Training!\n")
+                # print('Processed batch')
                 # print(global_step, n_train, batch_size)
+                
                 if global_step % (n_train // (1 * batch_size) + 1) == 0:
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
@@ -173,7 +216,7 @@ def get_args():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-e', '--epochs', metavar='E', type=int, default=5,
                         help='Number of epochs', dest='epochs')
-    parser.add_argument('-sf', '--saveFreq', metavar='SF', type=int, default=1,
+    parser.add_argument('-sf', '--saveFreq', metavar='SF', type=int, default=10,
                         help='Save every sf epochs', dest='saveFreq')
     parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=4,
                         help='Batch size', dest='batchsize')
@@ -195,6 +238,10 @@ def get_args():
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
     parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=1,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
+    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
+                        help='Root Directory for dataset', dest='rd')
+    parser.add_argument('-cp', '--save_cp', dest='load', type=bool, default=False,
+                        help='Whether to checkpoint or not. If false, will supersede saveFreq.')
 
     return parser.parse_args()
 
@@ -215,6 +262,7 @@ if __name__ == '__main__':
 
     torch.manual_seed(args.manual_seed)
     logging.info(f'Set seed for reproducability: {args.manual_seed}')
+
 
     # Change here to adapt to your data
     # n_channels=3 for RGB images
