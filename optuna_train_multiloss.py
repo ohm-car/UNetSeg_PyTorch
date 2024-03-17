@@ -92,12 +92,12 @@ def objective(trial,
 
     # HyperParams: Loss weights, regularizer_weight, lr, regularizer, optimizer
 
-    weight_recon_loss = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    weight_recon_loss = trial.suggest_float("rec_loss_weight", 1e-1, 1, log=False)
     regularizer = trial.suggest_categorical("regularizing_fn", ["omkar", "edward", "bce"])
-    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
-    regularizer_weight = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
