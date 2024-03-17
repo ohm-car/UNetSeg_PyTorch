@@ -14,19 +14,20 @@ import csv
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class PetsReconDataset(Dataset):
-    def __init__(self, imgs_dir, masks_dir, percs_dir, scale=1, mask_suffix=''):
+    def __init__(self, imgs_dir, masks_dir, percs_dir, im_res = 160, scale=1, mask_suffix=''):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
         self.scale = scale
         self.mask_suffix = mask_suffix
         self.percsDict = self.getPercsDict(percs_dir)
+        self.im_res = (im_res, im_res)
         # print(self.percsDict)
         # self.images = self.load_images(imgs_dir)
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')]
+                    if not file.startswith('.')][:1000]
         self.images, self.percs = self.load_data(imgs_dir)
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -103,7 +104,7 @@ class PetsReconDataset(Dataset):
     def preprocess(self, pil_img, transform):
         w, h = pil_img.size
 
-        pil_img = pil_img.resize((160, 160))
+        pil_img = pil_img.resize(self.im_res)
 
         imgT = transform(pil_img)
 
