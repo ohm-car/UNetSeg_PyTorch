@@ -41,6 +41,8 @@ n_val = None
 def get_dataloaders(args,
                     val_percent=0.1):
 
+    global n_train, n_val
+
     root_dir = args.rd
     dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
     dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
@@ -73,13 +75,13 @@ def objective(trial,
               regularizer_weight=0.1):
 
     # root_dir = args.rd
-    # print(root_dir, type(root_dir))
+    print(root_dir, type(root_dir))
     # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
     # print(dir_img, type(dir_img))
     # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     # print(dir_mask, type(dir_mask))
     if save_cp:
-        tm = datetime.datetime.now()
+        # tm = datetime.datetime.now()
         dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
@@ -292,7 +294,6 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    print(args.im_res, type(args.im_res))
     torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
