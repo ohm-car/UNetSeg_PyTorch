@@ -72,20 +72,20 @@ def objective(trial,
               regularizer=None,
               regularizer_weight=0.1):
 
-    root_dir = args.rd
+    # root_dir = args.rd
     # print(root_dir, type(root_dir))
-    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
     # print(dir_img, type(dir_img))
-    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+    # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     # print(dir_mask, type(dir_mask))
     if save_cp:
         tm = datetime.datetime.now()
         dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
-    dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - n_val
-    train, val = random_split(dataset, [n_train, n_val])
+    # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
+    # n_val = int(len(dataset) * val_percent)
+    # n_train = len(dataset) - n_val
+    # train, val = random_split(dataset, [n_train, n_val])
 
     # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2)
     # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
