@@ -27,7 +27,7 @@ class PetsReconDataset(Dataset):
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')][:100]
+                    if not file.startswith('.')][:400]
         self.images, self.masks, self.percs = self.load_data(imgs_dir, masks_dir)
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -42,7 +42,7 @@ class PetsReconDataset(Dataset):
         reader = csv.reader(f)
 
         for row in reader:
-            x[row[0].split('/')[-1].split('.')[0]] = float(row[1])
+            x[row[0].split('/')[-1].split('.')[0]] = float(row[2])
         # print(x)
         return x
 
@@ -118,9 +118,9 @@ class PetsReconDataset(Dataset):
         pil_mask = pil_mask.resize(self.im_res)
 
         imgM = transform(pil_mask)
-        imgM -= 1
-        imgM = (imgM > 0) * 1
-        return imgM
+        # imgM -= 1
+        # imgM = (imgM > 0) * 1
+        return imgM.float()
 
     # def load_images(self, imgs_dir):
 
@@ -177,7 +177,7 @@ class PetsReconDataset(Dataset):
                 T = T.convert(mode = 'RGB')
 
             T = self.preprocess(T, transform)
-            # print("Image tensor type ", type(T))
+            # print("Image tensor type ", T)
 
 
             M = Image.open(mask_file[0])
@@ -186,11 +186,19 @@ class PetsReconDataset(Dataset):
                 f'Error with file {mask_file}'
 
             M = self.preprocess_mask(M, transform)
-            # print("Mask tensor type ", type(M), max(M), min(M))
+            # print("Mask tensor type ", M)
+
+            M1 = ((M == 1) * 1).float()
+            M2 = ((M == 2) * 1).float()
+            M3 = ((M == 3) * 1).float()
+
+            Mp = M1 + M3
+
             # print(i)
             temp_images.append(T)
-            temp_masks.append(M)
+            temp_masks.append(Mp)
             temp_percs.append(torch.Tensor([self.percsDict[i]]))
+            # print(i, torch.mean(torch.Tensor(M1)), torch.mean(torch.Tensor(M2)), torch.mean(torch.Tensor(M3)), torch.Tensor([self.percsDict[i]]))
 
         print('Loaded Dataset')
 

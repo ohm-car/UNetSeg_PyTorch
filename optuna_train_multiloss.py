@@ -192,13 +192,14 @@ def objective(trial,
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     if net.n_classes > 1:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
                     else:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
                         writer.add_scalar('Recon/test', val_score[1], global_step)
                         writer.add_scalar('Perc/test', val_score[2], global_step)
+                        writer.add_scalar('IoU/test', val_score[3], global_step)
 
                     writer.add_images('images', imgs, global_step)
                     if net.n_classes == 1:
@@ -217,7 +218,7 @@ def objective(trial,
                 logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
-    return total_loss
+    return val_score[3]
 
 
 def get_args():
@@ -300,7 +301,7 @@ if __name__ == '__main__':
 
     train_loader, val_loader = get_dataloaders(args)
 
-    study = optuna.create_study(direction='minimize')
+    study = optuna.create_study(direction='maximize')
 
     try:
         study.optimize(lambda trial : objective(trial,
