@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from utils.percLoss import percLoss
 from dice_loss import dice_coeff
+from torchmetrics.classification import BinaryJaccardIndex
 
 
 def eval_net(net, loader, device, regularizer):
@@ -13,11 +14,13 @@ def eval_net(net, loader, device, regularizer):
     recon_loss = 0
     mask_loss = 0
     tot = 0
+    iou_metric = BinaryJaccardIndex()
 
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
         for batch in loader:
-            imgs, recon_img, true_perc = batch['image'], batch['reconstructed_image'], batch['mask_perc']
+            imgs, recon_img, true_masks, true_perc = batch['image'], batch['reconstructed_image'], batch['mask'], batch['mask_perc']
             imgs = imgs.to(device=device, dtype=torch.float32)
+            true_masks = true_masks.to(device=device, dtype=torch.long)
             recon_img = recon_img.to(device=device, dtype=torch.float32)
             true_perc = true_perc.to(device=device, dtype=torch.float32)
 
