@@ -214,7 +214,7 @@ def objective(trial,
 
         if save_cp:
             torch.save(net.state_dict(),
-                           dir_checkpoint + f'CP_T{trial.number}_E{epoch + 1}.pth')
+                           dir_checkpoint + f'CP_Trial{trial.number}_Epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint Saved!')
 
         # if save_cp:
