@@ -80,9 +80,13 @@ def objective(trial,
     # print(dir_img, type(dir_img))
     # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     # print(dir_mask, type(dir_mask))
-    if save_cp:
-        # tm = datetime.datetime.now()
-        dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+    # tm = datetime.datetime.now()
+    dir_checkpoint = 'checkpoints/optuna/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
+    try:
+        os.makedirs(dir_checkpoint, exist_ok=True)
+        logging.info('Created checkpoint directory')
+    except OSError:
+        sys.exit(99)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     # n_val = int(len(dataset) * val_percent)
@@ -127,7 +131,7 @@ def objective(trial,
         recon_criterion = nn.L1Loss()
 
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
-    weight_recon_loss, weight_percLoss = 1, 5
+    # weight_recon_loss, weight_percLoss = 1, 5
 
     for epoch in range(epochs):
         net.train()
@@ -161,7 +165,7 @@ def objective(trial,
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
-                perc_loss = weight_percLoss * mask_criterion(pred_mask, imgs_percs)
+                perc_loss = mask_criterion(pred_mask, imgs_percs)
                 total_loss = loss + perc_loss
                 epoch_loss += loss.item() + perc_loss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
@@ -206,16 +210,23 @@ def objective(trial,
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
 
+        save_cp = val_score[1] < 0.04 and val_score[3] > 0.55
+
         if save_cp:
-            try:
-                os.makedirs(dir_checkpoint)
-                logging.info('Created checkpoint directory')
-            except OSError:
-                pass
-            if (epoch + 1) % save_freq == 0:
-                torch.save(net.state_dict(),
-                           dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
-                logging.info(f'Checkpoint {epoch + 1} saved !')
+            torch.save(net.state_dict(),
+                           dir_checkpoint + f'CP_T{trial.number}_E{epoch + 1}.pth')
+            logging.info(f'Checkpoint Saved!')
+
+        # if save_cp:
+        #     try:
+        #         os.makedirs(dir_checkpoint)
+        #         logging.info('Created checkpoint directory')
+        #     except OSError:
+        #         pass
+        #     if (epoch + 1) % save_freq == 0:
+        #         torch.save(net.state_dict(),
+        #                    dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+        #         logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
     return val_score[3]
