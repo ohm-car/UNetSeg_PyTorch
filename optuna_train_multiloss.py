@@ -210,7 +210,7 @@ def objective(trial,
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
 
-        save_cp = val_score[1] < 0.04 and val_score[3] > 0.55
+        save_cp = val_score[3] > 0.55
 
         if save_cp:
             torch.save(net.state_dict(),
