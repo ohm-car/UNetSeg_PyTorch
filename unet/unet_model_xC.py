@@ -1,0 +1,47 @@
+""" Full assembly of the parts to form the complete network 
+This is the extended unet model with more hidden layers on the mask branch of the DNN."""
+
+import torch.nn.functional as F
+
+from .unet_parts import *
+
+
+class UNet(nn.Module):
+    def __init__(self, n_channels, n_classes, bilinear=True):
+        super(UNet, self).__init__()
+        self.n_channels = n_channels
+        self.n_classes = n_classes
+        self.bilinear = bilinear
+
+        self.inc = DoubleConv(n_channels, 32)   #240, 64
+        self.down1 = Down(32, 64)              #120, 128
+        self.down2 = Down(64, 128)             #60, 256
+        # self.down3 = Down(256, 512)
+        factor = 2 if bilinear else 1
+        self.down3 = Down(128, 256 // factor)  #30, 512
+        self.up1 = Up(256, 128 // factor, bilinear)    #60, 256
+        # self.up2 = Up(512, 256 // factor, bilinear)
+        self.up2 = Up(128, 64 // factor, bilinear)     #120, 64
+        self.up3 = Up(64, 32, bilinear)                #240, 64
+        self.outI = OutConvRecon(32, n_channels)
+        self.ext1 = DoubleConv(32, 128)
+        self.ext2 = DoubleConv(128, 128)
+        self.ext3 = DoubleConv(128, 32)
+        self.outM = OutConv(32, n_classes)
+
+    def forward(self, x):
+        x1 = self.inc(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        x4 = self.down3(x3)
+        # x5 = self.down4(x4)
+        x = self.up1(x4, x3)
+        x = self.up2(x, x2)
+        # x = self.up3(x, x2)
+        x = self.up3(x, x1)
+        im_recon = self.outI(x)
+        x = self.ext1(x)
+        x = self.ext2(x)
+        x = self.ext3(x)
+        mask_logits = self.outM(x)
+        return im_recon, mask_logits

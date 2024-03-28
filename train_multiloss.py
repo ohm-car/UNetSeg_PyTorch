@@ -111,6 +111,7 @@ def train_net(args,
                 # print('Loaded batch')
 
                 imgs = batch['image']
+                masks = batch['mask']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
                 assert imgs.shape[1] == net.n_channels, \
@@ -119,7 +120,8 @@ def train_net(args,
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                mask_type = torch.float32 if net.n_classes == 1 else torch.long
+                masks = masks.to(device=device, dtype=torch.long)
+                # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
 
@@ -163,13 +165,14 @@ def train_net(args,
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     if net.n_classes > 1:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
                     else:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}'.format(val_score[0], val_score[1], val_score[2]))
+                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
                         writer.add_scalar('Recon/test', val_score[1], global_step)
                         writer.add_scalar('Perc/test', val_score[2], global_step)
+                        writer.add_scalar('IoU/test', val_score[3], global_step)
 
                     writer.add_images('images', imgs, global_step)
                     if net.n_classes == 1:
