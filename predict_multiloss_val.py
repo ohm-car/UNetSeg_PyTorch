@@ -284,9 +284,9 @@ if __name__ == "__main__":
                 # full_mask = mask_probs.squeeze().cpu().numpy()
 
             fname = batch['image_ID'][i]
-            # print(fname)
+            print("fname: ", fname)
             out_fn = '{}/{}'.format(dir_result, fname)
-            # print(out_fn)
+            print("out_fn: ", out_fn)
             # print(pred_mask.cpu().numpy().shape)
             result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
             result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
@@ -298,7 +298,8 @@ if __name__ == "__main__":
             result_mask.save('{}_M.png'.format(out_fn))
             result_rounded_im.save('{}_RM.png'.format(out_fn))
 
-            key = '{}.png'.format(fname)
+            # key = '{}.png'.format(fname)
+            key = fname
             print(key)
             # print(list(percs_gt.items())[:3])
 

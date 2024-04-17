@@ -230,8 +230,13 @@ class PetsReconDataset(Dataset):
 
     def __getitem__(self, i):
 
+        idx = self.ids[i]
+        print("idx: ", idx)
+        img_file = glob(self.imgs_dir + idx + '.*')
+        print("img_file: ", img_file)
+
         return {
-            # 'image_ID': img_file[0] + idx,
+            'image_ID': idx,
             'image': self.images[i],
             'reconstructed_image': self.images[i],
             'mask': self.masks[i],
