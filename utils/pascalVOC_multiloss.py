@@ -13,7 +13,9 @@ import csv
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class PascalVOCDataset(Dataset):
-    def __init__(self, imgs_dir, masks_dir, percs_dir, scale=1, mask_suffix=''):
+    def __init__(self, main_dir, masks_dir, percs_dir, scale=1, mask_suffix=''):
+
+        self.main_dir = main_dir
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
         self.scale = scale
@@ -74,14 +76,14 @@ class PascalVOCDataset(Dataset):
 
         return img_trans
 
-    # def processMask(self, pilmask):
+    def processMask(self, pilmask):
 
-    #     mask = np.asarray(pilmask)
+        mask = np.asarray(pilmask)
 
-    #     mask = np.sum(mask, axis = 2)
-    #     mask = mask == 765
+        mask = np.sum(mask, axis = 2)
+        mask = mask == 765
 
-    #     return Image.fromarray(np.uint8(mask))
+        return Image.fromarray(np.uint8(mask))
 
     # def all_idx(self, idx, axis):
     #     grid = np.ogrid[tuple(map(slice, idx.shape))]
