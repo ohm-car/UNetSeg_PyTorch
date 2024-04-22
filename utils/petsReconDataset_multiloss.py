@@ -27,7 +27,7 @@ class PetsReconDataset(Dataset):
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')]
+                    if not file.startswith('.')][:100]
         self.images, self.masks, self.percs = self.load_data(imgs_dir, masks_dir)
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -231,9 +231,9 @@ class PetsReconDataset(Dataset):
     def __getitem__(self, i):
 
         idx = self.ids[i]
-        print("idx: ", idx)
+        # print("idx: ", idx)
         img_file = glob(self.imgs_dir + idx + '.*')
-        print("img_file: ", img_file)
+        # print("img_file: ", img_file)
 
         return {
             'image_ID': idx,

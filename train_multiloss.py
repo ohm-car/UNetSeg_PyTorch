@@ -251,6 +251,14 @@ if __name__ == '__main__':
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
     net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+
+    # Multi-GPU
+
+    print("Available GPUs: ", torch.cuda.device_count())
+    net = nn.DataParallel(net)
+    # net = nn.DataParallel(UNet(n_channels=3, n_classes=args.classes, bilinear=True))
+
+
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
