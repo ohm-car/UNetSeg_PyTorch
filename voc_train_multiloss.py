@@ -51,7 +51,7 @@ def train_net(args,
     root_dir = args.rd
     print(root_dir, type(root_dir))
     # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-    dir_main = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
+    dir_main = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/ImageSets/Segmentation/')
     print(dir_img, type(dir_img))
     dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
     print(dir_mask, type(dir_mask))

@@ -43,6 +43,18 @@ class PascalVOCDataset(Dataset):
         return x
 
     def get_filenames(self):
+
+        filenames = open(os.path.join(main_dir, 'trainval.txt'), 'r')
+        x = filenames.readlines()
+
+        for fname in x:
+            fn = os.path.join(imgs_dir, fname + '.jpg')
+            mfn = os.path.join(masks_dir, fname + '.jpg')
+            img_files.append(fn)
+            mask_files.append(mfn)
+            ids.append(fname)
+
+
         return self.ids
 
 
