@@ -17,8 +17,8 @@ from eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-from utils.pascalVOC_multiloss import PascalVOCDataset
-# from utils.petsReconDataset_multiloss import PetsReconDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
@@ -49,17 +49,18 @@ def train_net(args,
               regularizer_weight=0.1):
 
     root_dir = args.rd
-    print(root_dir, type(root_dir))
-    # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-    dir_main = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
+    print("Root Directory: ", root_dir, type(root_dir))
+    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    # dir_main = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
     print(dir_img, type(dir_img))
-    dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
+    # dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
+    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     print(dir_mask, type(dir_mask))
     tm = datetime.datetime.now()
     dir_checkpoint = 'checkpoints/pascalVOC/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
-    # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    dataset = PascalVOCDataset(dir_main, dir_mask, img_scale)
+    dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
+    # dataset = PascalVOCDataset(dir_main, dir_mask, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -257,7 +258,7 @@ if __name__ == '__main__':
     # Multi-GPU
 
     print("Available GPUs: ", torch.cuda.device_count())
-    net = nn.DataParallel(getattr(net))
+    # net = nn.DataParallel(getattr(net))
     # net = nn.DataParallel(UNet(n_channels=3, n_classes=args.classes, bilinear=True))
 
 

@@ -256,8 +256,8 @@ if __name__ == '__main__':
 
     # Multi-GPU
 
-    print("Available GPUs: ", torch.cuda.device_count())
-    net = nn.DataParallel(getattr(net))
+    # print("Available GPUs: ", torch.cuda.device_count())
+    # net = nn.DataParallel(getattr(net))
     # net = nn.DataParallel(UNet(n_channels=3, n_classes=args.classes, bilinear=True))
 
 
