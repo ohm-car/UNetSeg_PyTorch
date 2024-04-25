@@ -13,7 +13,7 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 
-from eval_multiloss import eval_net
+from voc_eval_seg import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
@@ -127,24 +127,32 @@ def train_net(args,
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
 
-                pred_recon_img, pred_mask = net(imgs)
-                # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
-                # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
-                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
-                # pcLossCriterion = nn.L1Loss()
+                # pred_recon_img, pred_mask = net(imgs)
+                # # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
+                # # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
+                # pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
+                # # pcLossCriterion = nn.L1Loss()
 
-                loss = weight_recon_loss * criterion(pred_recon_img, recon_img)
-                # print(torch.squeeze(pred_mask).shape)
-                # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
-                pcLoss = weight_percLoss * pcLossCriterion(pred_mask, imgs_percs)
-                total_loss = loss + pcLoss
-                epoch_loss += loss.item() + pcLoss.item()
-                writer.add_scalar('Loss/train', total_loss.item(), global_step)
+                # loss = weight_recon_loss * criterion(pred_recon_img, recon_img)
+                # # print(torch.squeeze(pred_mask).shape)
+                # # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
+                # pcLoss = weight_percLoss * pcLossCriterion(pred_mask, imgs_percs)
+                # total_loss = loss + pcLoss
 
-                pbar.set_postfix(**{'percLoss (batch)': pcLoss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
+                pred_masks = net(imgs)
+                loss = criterion(pred_masks, masks)
+
+                # epoch_loss += loss.item() + pcLoss.item()
+                epoch_loss += loss.item()
+                # writer.add_scalar('Loss/train', total_loss.item(), global_step)
+                writer.add_scalar('Loss/train', loss.item(), global_step)
+
+                # pbar.set_postfix(**{'percLoss (batch)': pcLoss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
+                pbar.set_postfix(**{'mask loss': loss.item()})
 
                 optimizer.zero_grad()
-                total_loss.backward()
+                # total_loss.backward()
+                loss.backward()
                 # pcLoss.backward()
                 nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
