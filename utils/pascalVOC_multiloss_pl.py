@@ -172,14 +172,14 @@ class PascalVOCDataset(Dataset):
 
         return imgT
 
-    def processMask(self, pilmask):
+    # def processMask(self, pilmask):
 
-        mask = np.asarray(pilmask)
+    #     mask = np.asarray(pilmask)
 
-        mask = np.sum(mask, axis = 2)
-        mask = mask == 765
+    #     mask = np.sum(mask, axis = 2)
+    #     mask = mask == 765
 
-        return Image.fromarray(np.uint8(mask))
+    #     return Image.fromarray(np.uint8(mask))
 
     def preprocess_mask(self, pil_mask, transform):
 
