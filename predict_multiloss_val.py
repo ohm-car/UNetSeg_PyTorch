@@ -134,7 +134,7 @@ def get_dataloaders(dataset, val_percent, batch_size):
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
-    # print(type(dataset),type(train),type(train.dataset))
+    print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)

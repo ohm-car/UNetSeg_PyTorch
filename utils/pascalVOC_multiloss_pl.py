@@ -91,7 +91,7 @@ class PascalVOCDataset(Dataset):
 
             # Mp = M1 + M3
             # print(M.shape, torch.squeeze(M).shape, M.dtype)
-            Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
+            # Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
             
             # np.set_printoptions(threshold=sys.maxsize)
             # print(np.array(Mp))
@@ -99,7 +99,7 @@ class PascalVOCDataset(Dataset):
 
             # print(i)
             temp_images.append(T)
-            temp_masks.append(Mp)
+            temp_masks.append(M)
             temp_percs.append(P)
             # print(i, torch.mean(torch.Tensor(M1)), torch.mean(torch.Tensor(M2)), torch.mean(torch.Tensor(M3)), torch.Tensor([self.percsDict[i]]))
 
@@ -254,11 +254,12 @@ class PascalVOCDataset(Dataset):
         # print("idx: ", idx)
         img_file = glob(self.imgs_dir + idx + '.*')
         # print("img_file: ", img_file)
+        Mp = torch.permute(one_hot(torch.squeeze(self.masks[i]), num_classes = self.num_classes), (2, 0, 1))
 
         return {
             'image_ID': idx,
             'image': self.images[i],
             'reconstructed_image': self.images[i],
-            'mask': self.masks[i],
+            'mask': Mp,
             'mask_perc': self.percs[i]
         }

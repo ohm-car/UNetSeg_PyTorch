@@ -17,8 +17,8 @@ from voc_eval_seg import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-# from utils.pascalVOC_multiloss_pl import PascalVOCDataset
-from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.pascalVOC_multiloss_pl import PascalVOCDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
 # from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
@@ -96,10 +96,12 @@ def train_net(args,
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
-    if net.n_classes > 1:
-        criterion = nn.L1Loss()
-    else:
-        criterion = nn.L1Loss()
+    # if net.n_classes > 1:
+    #     criterion = nn.L1Loss()
+    # else:
+    #     criterion = nn.L1Loss()
+
+    criterion = nn.CrossEntropyLoss(reduction='mean')
 
     weight_recon_loss, weight_percLoss = 1, 5
 
@@ -123,7 +125,7 @@ def train_net(args,
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                masks = masks.to(device=device, dtype=torch.long)
+                masks = masks.to(device=device, dtype=torch.float32)
                 # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
