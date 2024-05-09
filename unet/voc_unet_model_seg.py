@@ -12,22 +12,24 @@ class UNet(nn.Module):
         self.n_classes = n_classes
         self.bilinear = bilinear
 
-        self.inc = DoubleConv(n_channels, 32)
-        self.down1 = Down(32, 64)
-        self.down2 = Down(64, 128)
+        k = 64
+
+        self.inc = DoubleConv(n_channels, k)
+        self.down1 = Down(k, 2*k)
+        self.down2 = Down(2*k, 4*k)
         # factor = 2 if bilinear else 1
         # self.down3 = Down(128, 256 // factor)
-        self.down3 = Down(128, 256)
+        self.down3 = Down(4*k, 8*k)
         # self.down3 = Down(256, 512 // factor)
         factor = 2 if bilinear else 1
-        self.down4 = Down(256, 512 // factor)
+        self.down4 = Down(8*k, 16*k // factor)
         # self.up1 = Up(1024, 512 // factor, bilinear)
         # self.up2 = Up(512, 256 // factor, bilinear)
-        self.up0 = Up(512, 256 // factor, bilinear)
-        self.up1 = Up(256, 128 // factor, bilinear)
-        self.up2 = Up(128, 64 // factor, bilinear)
-        self.up3 = Up(64, 32, bilinear)
-        self.outc = OutConv(32, n_classes)
+        self.up0 = Up(16*k, 8*k // factor, bilinear)
+        self.up1 = Up(8*k, 4*k // factor, bilinear)
+        self.up2 = Up(4*k, 2*k // factor, bilinear)
+        self.up3 = Up(2*k, k, bilinear)
+        self.outc = OutConv(k, n_classes)
 
     def forward(self, x):
         x1 = self.inc(x)

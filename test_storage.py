@@ -20,8 +20,9 @@ from PIL import features
 
 nas_dir = Path().resolve().parent
 # nas_dir_img = os.path.join(nas_dir, 'Datasets/petsData/images/')
-nas_dir_img = os.path.join(nas_dir, 'data/images/')
-
+# nas_dir_img = os.path.join(nas_dir, 'data/images/')
+nas_dir_img = os.path.join(nas_dir, 'Datasets/VOCdevkit/VOC2012/')
+nas_dir_img = os.path.join(nas_dir_img, 'SegmentationClass/')
 scratch_dir = sys.argv[1]
 # scratch_dir_img = os.path.join(scratch_dir, 'Datasets/petsData/images/')
 scratch_dir_img = os.path.join(scratch_dir, 'data/images/')
@@ -62,42 +63,63 @@ transform = transforms.Compose([
 def preprocess(pil_img):
     # w, h = pil_img.size
 
-    # imgT = pil_img.resize((160, 160))
+    imgT = pil_img.resize((160, 160))
 
-    imgT = transforms.PILToTensor(pil_img)
+    imgT = transform(pil_img)
 
     # imgT = imgT.permute(2, 0, 1)
     # imgT = imgT / 255
 
-    return None
+    return imgT
 
 
-nas_imgs = os.listdir(nas_dir_img)
-print(str(len(nas_imgs)) + " Images found in NAS storage")
-nas_time = time.time()
-for i in nas_imgs:
-	T = Image.open(nas_dir_img + i)
-	if T.mode != 'RGB':
-		T = T.convert(mode = 'RGB')
-		# T = transform(T)
-	T = preprocess(T)
-nas_time = time.time() - nas_time
-print("NAS: Time taken to read " + str(len(nas_imgs)) + " images is " + str(nas_time) + " seconds.")
+imlist = list()
 
 nas_imgs = os.listdir(nas_dir_img)
 print(str(len(nas_imgs)) + " Images found in NAS storage")
 nas_time = time.time()
 for i in nas_imgs:
 	# print(i)
-	try:
-		T = read_image(nas_dir_img + i, ImageReadMode.RGB)
-		# print(type(T))
-	except Exception:
-		pass
-		# print(i, e)
-
+	T = Image.open(nas_dir_img + i)
+	# if T.mode != 'RGB':
+	# 	T = T.convert(mode = 'RGB')
+		# T = transform(T)
+	T = preprocess(T)
+	T = T - ((T == 255) * 255)
+	# print(T.shape)
+	# T1 = torch.permute(one_hot(torch.squeeze(T), num_classes = 21), (2, 0, 1))
+	imlist.append(T)
 nas_time = time.time() - nas_time
 print("NAS: Time taken to read " + str(len(nas_imgs)) + " images is " + str(nas_time) + " seconds.")
+
+nas_time = time.time()
+for i in imlist:
+	# print(i)
+	
+	# if T.mode != 'RGB':
+	# 	T = T.convert(mode = 'RGB')
+		# T = transform(T)
+	
+	
+	# print(T.shape)
+	T1 = torch.permute(one_hot(torch.squeeze(i), num_classes = 21), (2, 0, 1))
+nas_time = time.time() - nas_time
+print("NAS: Time taken to read " + str(len(nas_imgs)) + " images is " + str(nas_time) + " seconds.")
+
+# nas_imgs = os.listdir(nas_dir_img)
+# print(str(len(nas_imgs)) + " Images found in NAS storage")
+# nas_time = time.time()
+# for i in nas_imgs:
+# 	# print(i)
+# 	try:
+# 		T = read_image(nas_dir_img + i, ImageReadMode.RGB)
+# 		# print(type(T))
+# 	except Exception:
+# 		pass
+# 		# print(i, e)
+
+# nas_time = time.time() - nas_time
+# print("NAS: Time taken to read " + str(len(nas_imgs)) + " images is " + str(nas_time) + " seconds.")
 
 # scatch_imgs = os.listdir(scratch_dir_img)
 # print(str(len(scatch_imgs)) + " Images found in Scratch storage")

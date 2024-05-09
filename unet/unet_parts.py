@@ -38,6 +38,29 @@ class Down(nn.Module):
     def forward(self, x):
         return self.maxpool_conv(x)
 
+class ResnetBlock(nn.Module):
+    """Downscaling with maxpool then double conv"""
+
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.conv = nn.Sequential(
+            DoubleConv(in_channels, out_channels)
+        )
+        self.conv1 = DoubleConv(in_channels, out_channels)
+
+    def forward(self, x):
+
+        x1 = self.conv(x)
+        x2 = torch.cat([x1, x], dim=1)
+
+        x3 = self.conv(x2)
+        x4 = torch.cat([x3, x2], dim=1)
+
+        x5 = self.conv(x4)
+        x6 = torch.cat([x5, x4], dim=1)
+
+        return x6
+
 
 class Up(nn.Module):
     """Upscaling then double conv"""
