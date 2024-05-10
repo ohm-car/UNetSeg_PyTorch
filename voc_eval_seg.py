@@ -23,9 +23,9 @@ def eval_net(net, loader, device, regularizer):
             imgs, recon_img, true_masks, true_perc = batch['image'], batch['reconstructed_image'], batch['mask'], batch['mask_perc']
             imgs = imgs.to(device=device, dtype=torch.float32)
             true_masks = true_masks.to(device=device, dtype=torch.float32)
-            print(true_masks.shape)
+            # print(true_masks.shape)
             amax_true_masks = torch.argmax(true_masks, dim=1)
-            print(amax_true_masks.shape)
+            # print(amax_true_masks.shape)
             recon_img = recon_img.to(device=device, dtype=torch.float32)
             true_perc = true_perc.to(device=device, dtype=torch.float32)
 
