@@ -45,7 +45,7 @@ def train_net(args,
               batch_size=1,
               lr=0.001,
               val_percent=0.1,
-              save_cp=True,
+              save_cp=False,
               img_scale=0.5,
               regularizer=None,
               regularizer_weight=0.1):
