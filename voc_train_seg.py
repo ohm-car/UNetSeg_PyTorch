@@ -175,7 +175,7 @@ def train_net(args,
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device, regularizer)
+                    val_score = eval_net(net, val_loader, device, regularizer, epoch)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
@@ -288,7 +288,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    # torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
+    torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 

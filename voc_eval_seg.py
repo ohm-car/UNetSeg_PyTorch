@@ -7,7 +7,7 @@ from torchmetrics.classification import BinaryJaccardIndex
 from torchmetrics.functional.classification import binary_jaccard_index, multiclass_jaccard_index
 
 
-def eval_net(net, loader, device, regularizer):
+def eval_net(net, loader, device, regularizer, epoch):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
     mask_type = torch.float32 if net.n_classes == 1 else torch.long
@@ -83,5 +83,5 @@ def eval_net(net, loader, device, regularizer):
             pbar.update()
 
     net.train()
-    print("Val IOU: ", iou / n_val)
+    print("Epoch: ", epoch, "Val IOU: ", iou / n_val)
     return tot / n_val, mask_loss / n_val, seg_loss / n_val, iou / n_val
