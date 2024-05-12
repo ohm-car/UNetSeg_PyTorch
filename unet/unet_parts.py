@@ -188,8 +188,8 @@ class OutConv(nn.Module):
         super(OutConv, self).__init__()
         # self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=1),
-            nn.Softmax(dim=0)
+            nn.Conv2d(in_channels, out_channels, kernel_size=1)
+            # nn.Softmax(dim=0)
             )
 
     def forward(self, x):

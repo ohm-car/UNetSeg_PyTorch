@@ -183,7 +183,9 @@ class PascalVOCDataset(Dataset):
 
         # Mp = M1 + M3
         # print(M.shape, torch.squeeze(M).shape, M.dtype)
-        Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
+        # Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
+        # Mp = torch.permute(torch.squeeze(M), (2, 0, 1))
+        Mp = torch.squeeze(M)
 
         return {
             'image_ID': idx,

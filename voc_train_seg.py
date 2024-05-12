@@ -126,7 +126,8 @@ def train_net(args,
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                masks = masks.to(device=device, dtype=torch.float32)
+                # masks = masks.to(device=device, dtype=torch.float32)
+                masks = masks.to(device=device, dtype=torch.long)
                 # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
@@ -287,7 +288,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
+    # torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
