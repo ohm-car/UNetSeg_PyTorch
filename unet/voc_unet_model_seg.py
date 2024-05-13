@@ -2,7 +2,7 @@
 
 import torch.nn.functional as F
 
-from .voc_unet_parts import *
+from .unet_parts import *
 
 
 class UNet(nn.Module):
