@@ -116,7 +116,7 @@ class DownR(nn.Module):
             DoubleConv(in_channels, out_channels),
             ResnetMiniBlock(out_channels, out_channels),
             ResnetMiniBlock(out_channels, out_channels)
-            ,nn.Dropout(p=0.2)
+            # ,nn.Dropout(p=0.2)
         )
 
     def forward(self, x):
@@ -166,7 +166,7 @@ class UpR(nn.Module):
                 DoubleConv(in_channels, out_channels),
                 ResnetMiniBlock(out_channels, out_channels),
                 ResnetMiniBlock(out_channels, out_channels)
-                ,nn.Dropout(p=0.2)
+                # ,nn.Dropout(p=0.2)
                 )
         else:
             self.up = nn.ConvTranspose2d(in_channels , in_channels // 2, kernel_size=2, stride=2)
@@ -175,7 +175,7 @@ class UpR(nn.Module):
                 DoubleConv(in_channels, out_channels),
                 ResnetMiniBlock(out_channels, out_channels),
                 ResnetMiniBlock(out_channels, out_channels)
-                ,nn.Dropout(p=0.2)
+                # ,nn.Dropout(p=0.2)
                 )
 
 
@@ -213,6 +213,7 @@ class OutConv(nn.Module):
         # self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=1),
+            nn.Dropout(p=0.3)
             # nn.Softmax(dim=0)
             )
 
