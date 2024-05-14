@@ -16,7 +16,7 @@ from torchvision.io import read_image, ImageReadMode
 import torchvision.transforms as transforms
 from PIL import features
 
-# print(features.pilinfo(supported_formats = True))
+print(features.pilinfo(supported_formats = True))
 
 nas_dir = Path().resolve().parent
 # nas_dir_img = os.path.join(nas_dir, 'Datasets/petsData/images/')
