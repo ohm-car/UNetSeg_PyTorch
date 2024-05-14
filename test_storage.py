@@ -19,7 +19,7 @@ from PIL import features
 # print(features.pilinfo(supported_formats = True))
 
 nas_dir = Path().resolve().parent
-nas_dir = Path().resolve().parent
+# nas_dir = Path().resolve().parent
 # nas_dir_img = os.path.join(nas_dir, 'Datasets/petsData/images/')
 # nas_dir_img = os.path.join(nas_dir, 'data/images/')
 nas_dir_img = os.path.join(nas_dir, 'Datasets/VOCdevkit/VOC2012/')
