@@ -158,6 +158,7 @@ def train_net(args,
                 
                 if global_step % (n_train // (1 * batch_size) + 1) == 0:
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
+                    save_cp = False
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -180,6 +181,7 @@ def train_net(args,
                     if net.n_classes == 1:
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
+                    save_cp = val_score[3] > 0.20
 
         if save_cp:
             try:
@@ -187,10 +189,10 @@ def train_net(args,
                 logging.info('Created checkpoint directory')
             except OSError:
                 pass
-            if (epoch + 1) % save_freq == 0:
-                torch.save(net.state_dict(),
-                           dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
-                logging.info(f'Checkpoint {epoch + 1} saved !')
+            # if (epoch + 1) % save_freq == 0:
+            torch.save(net.state_dict(),
+                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+            logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
 
