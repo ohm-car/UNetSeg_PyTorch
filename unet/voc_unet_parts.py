@@ -3,7 +3,40 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from aaMaxPool import MaxPool2dAA
 
+
+class DoubleConv75(nn.Module):
+    """(convolution => [BN] => ReLU) * 2"""
+
+    def __init__(self, in_channels, out_channels, mid_channels=None, dropout=None):
+        super().__init__()
+        if not mid_channels:
+            mid_channels = out_channels
+
+        if dropout is not None:
+            self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding=1),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=5, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout)
+        )
+        else:    
+            self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding=1),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=5, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        return self.double_conv(x)
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -54,17 +87,17 @@ class Down(nn.Module):
 class ResnetMiniBlock(nn.Module):
     """Downscaling with maxpool then double conv"""
 
-    def __init__(self, in_channels, out_channels, dropout = None):
+    def __init__(self, channels, dropout = None):
         super().__init__()
 
 
         self.dropout = dropout
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(channels)
         self.relu = nn.ReLU(inplace=True)
 
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(channels)
 
         if dropout:
             self.drop = nn.Dropout(p=dropout)
@@ -108,16 +141,17 @@ class InitR(nn.Module):
 class DownR(nn.Module):
     """Downscaling with maxpool then double conv"""
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, num_rm=2):
         super().__init__()
         mid_channels = (in_channels + out_channels) // 2
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels),
-            ResnetMiniBlock(out_channels, out_channels),
-            ResnetMiniBlock(out_channels, out_channels)
+            DoubleConv(in_channels, out_channels)
             # ,nn.Dropout(p=0.2)
         )
+
+        for i in range(num_rm):
+            self.maxpool_conv.append(ResnetMiniBlock(out_channels, out_channels))
 
     def forward(self, x):
         return self.maxpool_conv(x)
@@ -154,7 +188,7 @@ class Up(nn.Module):
 class UpR(nn.Module):
     """Upscaling then double conv"""
 
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels, out_channels, num_rm=2, bilinear=True):
         super().__init__()
 
         # if bilinear, use the normal convolutions to reduce the number of channels
@@ -163,20 +197,20 @@ class UpR(nn.Module):
             self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
             # self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
             self.conv = nn.Sequential(
-                DoubleConv(in_channels, out_channels),
-                ResnetMiniBlock(out_channels, out_channels),
-                ResnetMiniBlock(out_channels, out_channels)
+                DoubleConv(in_channels, out_channels)
                 # ,nn.Dropout(p=0.2)
                 )
+            for i in range(num_rm):
+                self.conv.append(ResnetMiniBlock(out_channels, out_channels))
         else:
             self.up = nn.ConvTranspose2d(in_channels , in_channels // 2, kernel_size=2, stride=2)
             # self.conv = DoubleConv(in_channels, out_channels)
             self.conv = nn.Sequential(
-                DoubleConv(in_channels, out_channels),
-                ResnetMiniBlock(out_channels, out_channels),
-                ResnetMiniBlock(out_channels, out_channels)
+                DoubleConv(in_channels, out_channels)
                 # ,nn.Dropout(p=0.2)
                 )
+            for i in range(num_rm):
+                self.conv.append(ResnetMiniBlock(out_channels, out_channels))
 
 
     def forward(self, x1, x2):

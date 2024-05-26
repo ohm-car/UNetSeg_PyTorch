@@ -170,6 +170,9 @@ def train_net(args,
                     if net.n_classes > 1:
                         logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
+                        writer.add_scalar('Recon/test', val_score[1], global_step)
+                        writer.add_scalar('Perc/test', val_score[2], global_step)
+                        writer.add_scalar('IoU/test', val_score[3], global_step)
                     else:
                         logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
