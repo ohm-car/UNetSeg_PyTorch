@@ -287,8 +287,9 @@ if __name__ == '__main__':
         )
         logging.info(f'Model loaded from {args.load}')
 
-    net.to(device=device)
+    net.to(device=torch.device('cpu'))
     torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
+    net.to(device=device)
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 

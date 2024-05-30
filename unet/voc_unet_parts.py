@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from aaMaxPool import MaxPool2dAA
+from .aaMaxPool import MaxPool2dAA
 
 
 class DoubleConv75(nn.Module):
@@ -16,21 +16,21 @@ class DoubleConv75(nn.Module):
 
         if dropout is not None:
             self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding=1),
+            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding='same'),
             nn.BatchNorm2d(mid_channels),
             nn.ReLU(inplace=True),
             nn.Dropout(p=dropout),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=5, padding=1),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=5, padding='same'),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Dropout(p=dropout)
         )
         else:    
             self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding=1),
+            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding='same'),
             nn.BatchNorm2d(mid_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=5, padding=1),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=5, padding='same'),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
         )
@@ -87,17 +87,17 @@ class Down(nn.Module):
 class ResnetMiniBlock(nn.Module):
     """Downscaling with maxpool then double conv"""
 
-    def __init__(self, channels, dropout = None):
+    def __init__(self, in_channels, out_channels, dropout = None):
         super().__init__()
 
 
         self.dropout = dropout
-        self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(channels)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
-        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(channels)
+        self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
 
         if dropout:
             self.drop = nn.Dropout(p=dropout)
@@ -130,7 +130,7 @@ class InitR(nn.Module):
         super().__init__()
         self.conv = nn.Sequential(
             # nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels),
+            DoubleConv75(in_channels, out_channels),
             ResnetMiniBlock(out_channels, out_channels),
             ResnetMiniBlock(out_channels, out_channels)
         )
@@ -145,7 +145,8 @@ class DownR(nn.Module):
         super().__init__()
         mid_channels = (in_channels + out_channels) // 2
         self.maxpool_conv = nn.Sequential(
-            nn.MaxPool2d(2),
+            MaxPool2dAA(),
+            # nn.MaxPool2d(2),
             DoubleConv(in_channels, out_channels)
             # ,nn.Dropout(p=0.2)
         )
