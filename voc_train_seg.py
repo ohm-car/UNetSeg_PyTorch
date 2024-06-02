@@ -289,6 +289,8 @@ if __name__ == '__main__':
 
     if device == torch.device('mps'):
         net.to(device=torch.device('cpu'))
+    else:
+        net.to(device=device)
     torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     net.to(device=device)
     # faster convolutions, but more memory
