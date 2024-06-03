@@ -20,7 +20,7 @@ source activate unet
 
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_multiloss.py -rd=/scratch/$SLURM_JOBID -b=160 -e=60 -sf=10 -rw=0.1 -r='omkar'
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/optuna_train_multiloss.py -rd=/scratch/$SLURM_JOBID -b=128 -e=60
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/voc_train_seg.py -e=1000 -b=48
+python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/voc_train_seg.py -e=1000 -b=32
 
 mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.log
 mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.err
