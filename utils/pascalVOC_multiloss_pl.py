@@ -24,7 +24,7 @@ class PascalVOCDataset(Dataset):
         self.main_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012')
         self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
-        self.file_list = self.get_filenames(os.path.join(self.main_dir, 'ImageSets/Segmentation/'))
+        self.file_list = self.get_filenames(os.path.join(self.main_dir, 'ImageSets/Segmentation/'))[:100]
         # print(self.file_list)
 
         self.num_classes = 20 + 1 #+1 for background
@@ -254,7 +254,8 @@ class PascalVOCDataset(Dataset):
         # print("idx: ", idx)
         img_file = glob(self.imgs_dir + idx + '.*')
         # print("img_file: ", img_file)
-        Mp = torch.permute(one_hot(torch.squeeze(self.masks[i]), num_classes = self.num_classes), (2, 0, 1))
+        # Mp = torch.permute(one_hot(torch.squeeze(self.masks[i]), num_classes = self.num_classes), (2, 0, 1))
+        Mp = torch.squeeze(self.masks[i])
 
         return {
             'image_ID': idx,
