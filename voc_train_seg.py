@@ -14,8 +14,8 @@ import torchsummary
 import datetime
 
 from voc_eval_seg import eval_net
-# from unet import UNet
-from unet.voc_unet_model_seg import UNet
+from unet import UNet
+# from unet.voc_unet_model_seg import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 from utils.pascalVOC_multiloss_pl import PascalVOCDataset
