@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .aaMaxPool import MaxPool2dAA
+from aaMaxPool import MaxPool2dAA
 
 
 class DoubleConv75(nn.Module):
