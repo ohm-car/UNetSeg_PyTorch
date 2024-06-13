@@ -10,7 +10,7 @@ from torchmetrics.functional.classification import binary_jaccard_index, multicl
 def eval_net(net, loader, device, regularizer, epoch):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
-    mask_type = torch.float32 if net.n_classes == 1 else torch.long
+    # mask_type = torch.float32 if net.n_classes == 1 else torch.long
     n_val = len(loader)  # the number of batch
     seg_loss = 0
     mask_loss = 0
@@ -31,11 +31,12 @@ def eval_net(net, loader, device, regularizer, epoch):
             true_perc = true_perc.to(device=device, dtype=torch.float32)
 
             with torch.no_grad():
-                pred_masks = net(imgs)
+                pred_masks = net(imgs)['out']
                 # print("Predictions Shape: ", pred_masks.shape)
                 # print("Targets Shape: ", true_masks.shape)
 
-            if net.n_classes > 1:
+            # if net.n_classes > 1:
+            if True:
                 # seg_loss_batch = F.l1_loss(pred_masks, true_masks).item()
                 seg_loss_batch = F.cross_entropy(pred_masks, true_masks).item()
                 # pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
