@@ -74,8 +74,8 @@ def train_net(args,
     # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
 
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 4)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 4, pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
