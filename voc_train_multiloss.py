@@ -46,6 +46,7 @@ def create_model():
                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
                  nn.Sigmoid())
     model.aux_classifier = aux
+    model.classifier.append(nn.Sigmoid())
     return model
 
 
@@ -282,7 +283,8 @@ if __name__ == '__main__':
     # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
     net = create_model()
-    # print(net)
+    print(net.classifier)
+    print(net.aux_classifier)
 
     # Multi-GPU
 

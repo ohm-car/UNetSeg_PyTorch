@@ -25,6 +25,7 @@ class percLoss(nn.Module):
 
         #target: Value between 0 and 1, obtained from CSV
         #pred_mask: A tensor with the shape of the image, and channels equal to number of classes. For now 1 channel.
+        print(pred_mask.size())
 
         # Bernoulli differentiable sampler, If required. Not used by default.
         if(self.sampler == 'bernoulli'):

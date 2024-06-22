@@ -20,27 +20,28 @@ def eval_net(net, loader, device, regularizer, epoch):
 
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
         for batch in loader:
-            imgs, recon_img, true_masks, true_perc = batch['image'], batch['reconstructed_image'], batch['mask'], batch['mask_perc']
+            imgs, recon_imgs, true_masks, true_perc = batch['image'], batch['reconstructed_image'], batch['mask'], batch['mask_perc']
             imgs = imgs.to(device=device, dtype=torch.float32)
             # true_masks = true_masks.to(device=device, dtype=torch.float32)
             true_masks = true_masks.to(device=device, dtype=torch.long)
             # print(true_masks.shape)
             # amax_true_masks = torch.argmax(true_masks, dim=1)
             # print(amax_true_masks.shape)
-            recon_img = recon_img.to(device=device, dtype=torch.float32)
+            recon_imgs = recon_imgs.to(device=device, dtype=torch.float32)
             true_perc = true_perc.to(device=device, dtype=torch.float32)
 
             with torch.no_grad():
-                pred_masks = net(imgs)['out']
+                outs = net(imgs)
+                pred_masks, pred_imgs = outs['out'], outs['aux']
                 # print("Predictions Shape: ", pred_masks.shape)
                 # print("Targets Shape: ", true_masks.shape)
 
             # if net.n_classes > 1:
             if True:
-                # seg_loss_batch = F.l1_loss(pred_masks, true_masks).item()
-                seg_loss_batch = F.cross_entropy(pred_masks, true_masks).item()
-                # pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
-                # mask_loss_batch = pcLossCriterion(pred_mask, true_perc).item()
+                seg_loss_batch = F.l1_loss(pred_imgs, recon_imgs).item()
+                # seg_loss_batch = F.cross_entropy(pred_masks, true_masks).item()
+                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
+                mask_loss_batch = pcLossCriterion(pred_masks, true_perc).item()
 
                 # mean_batch_iou = 0
                 # for i in range(len(pred_masks)):
@@ -57,12 +58,12 @@ def eval_net(net, loader, device, regularizer, epoch):
                 # iou += (mean_batch_iou / len(pred_masks))
                 iou += batch_iou
                 seg_loss += seg_loss_batch
-                # mask_loss += mask_loss_batch
-                # tot += seg_loss_batch + mask_loss_batch
-                tot += seg_loss_batch
+                mask_loss += mask_loss_batch
+                tot += seg_loss_batch + mask_loss_batch
+                # tot += seg_loss_batch
             else:
-                # seg_loss_batch = F.l1_loss(pred_masks, true_masks).item()
-                seg_loss_batch = F.cross_entropy(pred_masks, true_masks).item()
+                seg_loss_batch = F.l1_loss(pred_imgs, recon_imgs).item()
+                # seg_loss_batch = F.cross_entropy(pred_masks, true_masks).item()
                 # pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
                 # mask_loss_batch = pcLossCriterion(pred_mask, true_perc).item()
 
