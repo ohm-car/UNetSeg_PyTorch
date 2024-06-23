@@ -17,7 +17,7 @@ import numpy as np
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class PascalVOCDataset(Dataset):
-    def __init__(self, root_dir, masks_dir, percs_dir, im_res = 160, scale=1, mask_suffix=''):
+    def __init__(self, root_dir, masks_dir, percs_dir, im_res = 224, scale=1, mask_suffix=''):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012')
         self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')

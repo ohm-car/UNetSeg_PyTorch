@@ -17,7 +17,8 @@ from voc_eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-from utils.pascalVOC_multiloss_pl import PascalVOCDataset
+# from utils.pascalVOC_multiloss_pl import PascalVOCDataset
+from utils.pascalVOC_multiloss import PascalVOCDataset
 # from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
@@ -74,7 +75,7 @@ def train_net(args,
     dir_checkpoint = 'checkpoints/pascalVOC/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    dataset = PascalVOCDataset(root_dir, None, None)
+    dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
