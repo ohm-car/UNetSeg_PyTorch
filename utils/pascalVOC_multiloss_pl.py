@@ -24,7 +24,7 @@ class PascalVOCDataset(Dataset):
         self.main_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012')
         self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
-        self.file_list = self.get_filenames(os.path.join(self.main_dir, 'ImageSets/Segmentation/'))
+        self.file_list = self.get_filenames(os.path.join(self.main_dir, 'ImageSets/Segmentation/'))[:400]
         # print(self.file_list)
 
         self.num_classes = 20 + 1 #+1 for background

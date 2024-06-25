@@ -90,7 +90,9 @@ class percLoss(nn.Module):
 
     def bc_entropy(self, pred_mask):
 
-        targets = torch.argmax(pred_mask, dim=0)
+        # print('Pred Mask shape: ', pred_mask.size())
+        targets = torch.argmax(pred_mask, dim=1)
+        # print('Targets Shape: ', targets.size())
         return F.cross_entropy(pred_mask, targets)
 
         # targets = torch.round(pred_mask)
