@@ -141,15 +141,19 @@ def objective(trial,
     logging.info(f'''Starting training:
         Epochs:             {epochs}
         Batch size:         {batch_size}
-        Learning rate:      {lr}
         Training size:      {n_train}
         Validation size:    {n_val}
         Checkpoints:        {save_cp}
         Device:             {device.type}
         Images scaling:     {img_scale}
-        Regularizer:        {regularizer}
-        Regularizer Weight: {regularizer_weight}
-        Mask Sampling:      {args.sp}
+        Mask Sampling:      {args.sp}   \n
+
+        Hyperparameters:
+        Reconstruction Loss Weight: {weight_recon_loss}
+        Regularizer:                {regularizer}
+        Regularizer Weight:         {regularizer_weight}
+        Optimizer:                  {optimizer_name}
+        Learning Rate:              {lr}
     ''')
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     # optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
