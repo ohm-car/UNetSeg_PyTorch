@@ -394,8 +394,8 @@ if __name__ == '__main__':
         #           regularizer = args.reg,
         #           regularizer_weight = args.rw)
     except KeyboardInterrupt:
-        torch.save(net.state_dict(), 'INTERRUPTED.pth')
-        logging.info('Saved interrupt')
+        # torch.save(net.state_dict(), 'INTERRUPTED.pth')
+        # logging.info('Saved interrupt')
         try:
             sys.exit(0)
         except SystemExit:

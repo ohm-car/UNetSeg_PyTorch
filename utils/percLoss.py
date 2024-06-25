@@ -89,8 +89,12 @@ class percLoss(nn.Module):
         return torch.pow(torch.tensor(0.5), 2) - torch.mean(torch.pow(0.5 - pred_mask, 2))
 
     def bc_entropy(self, pred_mask):
-        targets = torch.round(pred_mask)
-        return F.binary_cross_entropy(pred_mask, targets)
+
+        targets = torch.argmax(pred_mask, dim=0)
+        return F.cross_entropy(pred_mask, targets)
+
+        # targets = torch.round(pred_mask)
+        # return F.binary_cross_entropy(pred_mask, targets)
 
     def bernoulli_sample(self, pred_mask):
 
