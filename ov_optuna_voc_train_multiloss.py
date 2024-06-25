@@ -263,7 +263,7 @@ def objective(trial,
                 pass
             # if (epoch + 1) % save_freq == 0:
             torch.save(net.state_dict(),
-                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+                       dir_checkpoint + f'CP_Trial{trial.number}_Epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
