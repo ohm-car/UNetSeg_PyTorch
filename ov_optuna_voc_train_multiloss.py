@@ -74,7 +74,6 @@ def create_model():
 
 def objective(trial,
               args,
-              net,
               device,
               train_loader,
               val_loader,
@@ -87,6 +86,9 @@ def objective(trial,
               save_freq=None,
               regularizer=None,
               regularizer_weight=0.1):
+
+    net = create_model()
+    net.to(device=device)
 
     # root_dir = args.rd
     print(root_dir, type(root_dir))
@@ -325,9 +327,9 @@ if __name__ == '__main__':
     #   - For N > 2 classes, use n_classes=N
     # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
-    net = create_model()
-    print(net.classifier)
-    print(net.aux_classifier)
+    # net = create_model()
+    # print(net.classifier)
+    # print(net.aux_classifier)
 
     # Multi-GPU
 
@@ -347,13 +349,13 @@ if __name__ == '__main__':
                  # f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
                  )
 
-    if args.load:
-        net.load_state_dict(
-            torch.load(args.load, map_location=device)
-        )
-        logging.info(f'Model loaded from {args.load}')
+    # if args.load:
+    #     net.load_state_dict(
+    #         torch.load(args.load, map_location=device)
+    #     )
+    #     logging.info(f'Model loaded from {args.load}')
 
-    net.to(device=device)
+    # net.to(device=device)
     # torchsummary.summary(net, input_size=(3, 160, 160))
     # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
     # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
@@ -369,7 +371,6 @@ if __name__ == '__main__':
 
         study.optimize(lambda trial : objective(trial,
                                                 args=args,
-                                                net=net,
                                                 epochs=args.epochs,
                                                 batch_size=args.batchsize,
                                                 device=device,
