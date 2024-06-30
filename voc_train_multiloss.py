@@ -313,13 +313,13 @@ if __name__ == '__main__':
         )
         logging.info(f'Model loaded from {args.load}')
 
-    # net.to(device=device)
+    net.to(device=device)
     # torchsummary.summary(net, input_size=(3, 160, 160))
     torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
     torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
     torchsummary.summary(net.aux_classifier, input_size=(1024, args.im_res, args.im_res))
 
-    net.to(device=device)
+    # net.to(device=device)
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
