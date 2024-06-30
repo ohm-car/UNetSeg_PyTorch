@@ -24,6 +24,7 @@ from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
 from torchvision.models.segmentation import fcn_resnet50, FCN
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 
 # root_dir = Path().resolve().parent
 # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
@@ -39,7 +40,8 @@ dir_checkpoint = None
 
 def create_model():
 
-    model = fcn_resnet50(aux_loss=True)
+    # model = fcn_resnet50(aux_loss=True)
+    model = deeplabv3_resnet50(aux_loss=True)
     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
                  nn.ReLU(inplace=True),
@@ -311,11 +313,13 @@ if __name__ == '__main__':
         )
         logging.info(f'Model loaded from {args.load}')
 
-    net.to(device=device)
+    # net.to(device=device)
     # torchsummary.summary(net, input_size=(3, 160, 160))
-    # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
-    # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
-    # torchsummary.summary(net.aux_classifier, input_size=(1024, args.im_res, args.im_res))
+    torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
+    torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
+    torchsummary.summary(net.aux_classifier, input_size=(1024, args.im_res, args.im_res))
+
+    net.to(device=device)
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 

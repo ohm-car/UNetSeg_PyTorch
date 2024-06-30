@@ -24,6 +24,7 @@ from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
 from torchvision.models.segmentation import fcn_resnet50, FCN
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 
 # root_dir = Path().resolve().parent
 # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
@@ -60,7 +61,8 @@ def get_dataloaders(args,
 
 def create_model():
 
-    model = fcn_resnet50(aux_loss=True)
+    # model = fcn_resnet50(aux_loss=True)
+    model = deeplabv3_resnet50(aux_loss=True)
     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
                  nn.ReLU(inplace=True),
