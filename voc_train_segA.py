@@ -274,7 +274,7 @@ if __name__ == '__main__':
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
     net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
 
-    net = nn.DataParallel(net)
+    # net = nn.DataParallel(net)
 
     # Multi-GPU
 
