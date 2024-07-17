@@ -222,7 +222,7 @@ def train_net(args,
             torch.save(net.state_dict(),
                        dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
-            save_iou_thresh = save_iou_thresh * 1.1
+            save_iou_thresh = val_score[3] * 1.1
 
     writer.close()
 
