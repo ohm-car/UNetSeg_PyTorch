@@ -17,8 +17,8 @@ from voc_eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-# from utils.pascalVOC_multiloss_pl import PascalVOCDataset
-from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.pascalVOC_multiloss_pl import PascalVOCDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
 # from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
