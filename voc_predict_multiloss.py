@@ -139,19 +139,30 @@ def imrecon_to_image(img):
     # print(mask.shape)
     return Image.fromarray((img * 255).astype(np.uint8), 'RGB')
 
-def mask_to_image(mask):
+# def mask_to_image(mask):
     
-    #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
-    # print(mask.shape, type(mask))
-    # mask = mask.transpose((1,2,0))
-    # thres_mask = mask > 0.3
-    # print(mask.shape, type(mask))
-    # mask = np.clip(mask, 0, 1)
-    mask = torch.argmax(mask, dim=1)
-    print(mask.shape)
-    t = transforms.ToPILImage()
-    return t(mask)
-    # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
+#     #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
+#     # print(mask.shape, type(mask))
+#     # mask = mask.transpose((1,2,0))
+#     # thres_mask = mask > 0.3
+#     # print(mask.shape, type(mask))
+#     # mask = np.clip(mask, 0, 1)
+#     mask = torch.argmax(mask, dim=1)
+#     print(mask.shape)
+#     t = transforms.ToPILImage()
+#     return t(mask)
+#     # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
+
+def mask_to_image(img, mask, cmap):
+
+    mask = torch.squeeze(mask)
+    mask = torch.argmax(mask, dim=0)
+    # print("Inside mask processing ", mask.shape)
+
+    m2 = Image.fromarray(mask.byte().cpu().numpy())
+    m2.putpalette(cmap)
+
+    return m2
 
 def get_dataloaders(dataset, val_percent, batch_size):
 
@@ -184,6 +195,26 @@ def rounded_mask(mask):
     mask = torch.round(mask)
     return mask
 
+def color_map(N=256, normalized=False):
+    def bitget(byteval, idx):
+        return ((byteval & (1 << idx)) != 0)
+
+    dtype = 'float32' if normalized else 'uint8'
+    cmap = np.zeros((N, 3), dtype=dtype)
+    for i in range(N):
+        r = g = b = 0
+        c = i
+        for j in range(8):
+            r = r | (bitget(c, 0) << 7-j)
+            g = g | (bitget(c, 1) << 7-j)
+            b = b | (bitget(c, 2) << 7-j)
+            c = c >> 3
+
+        cmap[i] = np.array([r, g, b])
+
+    cmap = cmap/255 if normalized else cmap
+    return cmap
+
 
 if __name__ == "__main__":
     args = get_args()
@@ -192,6 +223,8 @@ if __name__ == "__main__":
     batch_size = 2
 
     torch.manual_seed(args.manual_seed)
+
+    cmap = color_map()[:21]
 
     #Code to get train and val dataloaders. Use dataset from utils
 
@@ -318,14 +351,14 @@ if __name__ == "__main__":
             # print(pred_mask.cpu().numpy().shape)
             result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
             # result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
-            result_mask = mask_to_image(pred_mask)
+            result_mask = mask_to_image(img, pred_mask, cmap)
             result_median = mask_median(pred_mask)
             result_rounded = rounded_mask(pred_mask)
-            result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
+            # result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
 
             result_im.save('{}_RI.png'.format(out_fn))
             result_mask.save('{}_M.png'.format(out_fn))
-            result_rounded_im.save('{}_RM.png'.format(out_fn))
+            # result_rounded_im.save('{}_RM.png'.format(out_fn))
 
             # key = '{}.png'.format(fname)
             key = fname
