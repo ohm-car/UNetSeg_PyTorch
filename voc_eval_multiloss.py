@@ -19,9 +19,6 @@ def eval_net(net, loader, device, regularizer, epoch):
     tot = 0
     iou_metric = BinaryJaccardIndex()
 
-    for batch in loader:
-        print('batch')
-
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
         for batch in loader:
             imgs, recon_imgs, true_masks, true_perc = batch['image'], batch['reconstructed_image'], batch['mask'], batch['mask_perc']
@@ -37,8 +34,8 @@ def eval_net(net, loader, device, regularizer, epoch):
             with torch.no_grad():
                 outs = net(imgs)
                 pred_masks, pred_imgs = outs['out'], outs['aux']
-                print("Predictions Shape: ", pred_masks.shape)
-                print("Targets Shape: ", true_masks.shape)
+                # print("Predictions Shape: ", pred_masks.shape)
+                # print("Targets Shape: ", true_masks.shape)
 
             # if net.n_classes > 1:
             if True:
@@ -56,7 +53,7 @@ def eval_net(net, loader, device, regularizer, epoch):
                 #     mean_batch_iou += single_iou
 
                 # batch_iou = multiclass_jaccard_index(pred_masks, amax_true_masks, num_classes=21)
-                batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21)
+                batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21, average=None)
                 print(batch_iou)
                 # print(batch_iou, mean_batch_iou / len(pred_masks), mean_batch_iou)
 
