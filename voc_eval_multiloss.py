@@ -5,6 +5,7 @@ from utils.percLoss import percLoss
 from dice_loss import dice_coeff
 from torchmetrics.classification import BinaryJaccardIndex
 from torchmetrics.functional.classification import binary_jaccard_index, multiclass_jaccard_index
+from torchmetrics.functional.segmentation import mean_iou
 
 
 def eval_net(net, loader, device, regularizer, epoch):
@@ -34,8 +35,8 @@ def eval_net(net, loader, device, regularizer, epoch):
             with torch.no_grad():
                 outs = net(imgs)
                 pred_masks, pred_imgs = outs['out'], outs['aux']
-                # print("Predictions Shape: ", pred_masks.shape)
-                # print("Targets Shape: ", true_masks.shape)
+                print("Predictions Shape: ", pred_masks.shape)
+                print("Targets Shape: ", true_masks.shape)
 
             # if net.n_classes > 1:
             if True:
@@ -55,6 +56,8 @@ def eval_net(net, loader, device, regularizer, epoch):
                 # batch_iou = multiclass_jaccard_index(pred_masks, amax_true_masks, num_classes=21)
                 test_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21, average=None)
                 print(test_iou)
+                mIU = mean_iou(pred_masks, true_masks, num_classes=21, per_class=True)
+                print(mIU)
                 batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21)
                 # print(batch_iou, mean_batch_iou / len(pred_masks), mean_batch_iou)
 
