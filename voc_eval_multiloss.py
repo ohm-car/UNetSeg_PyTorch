@@ -34,8 +34,8 @@ def eval_net(net, loader, device, regularizer, epoch):
             with torch.no_grad():
                 outs = net(imgs)
                 pred_masks, pred_imgs = outs['out'], outs['aux']
-                # print("Predictions Shape: ", pred_masks.shape)
-                # print("Targets Shape: ", true_masks.shape)
+                print("Predictions Shape: ", pred_masks.shape)
+                print("Targets Shape: ", true_masks.shape)
 
             # if net.n_classes > 1:
             if True:
