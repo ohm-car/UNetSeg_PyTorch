@@ -57,7 +57,7 @@ def eval_net(net, loader, device, regularizer, epoch):
                 test_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21, average=None)
                 print(test_iou)
                 mIU = mean_iou(torch.argmax(pred_masks, dim=1), true_masks, num_classes=21, per_class=True)
-                print(mIU)
+                print(mIU.shape)
                 batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21)
                 # print(batch_iou, mean_batch_iou / len(pred_masks), mean_batch_iou)
 
