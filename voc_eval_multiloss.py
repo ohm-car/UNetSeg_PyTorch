@@ -12,6 +12,7 @@ def eval_net(net, loader, device, regularizer, epoch):
     net.eval()
     # mask_type = torch.float32 if net.n_classes == 1 else torch.long
     n_val = len(loader)  # the number of batch
+    print("n_val: ", n_val)
     seg_loss = 0
     mask_loss = 0
     iou = 0
@@ -53,6 +54,7 @@ def eval_net(net, loader, device, regularizer, epoch):
 
                 # batch_iou = multiclass_jaccard_index(pred_masks, amax_true_masks, num_classes=21)
                 batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=21)
+                print(batch_iou)
                 # print(batch_iou, mean_batch_iou / len(pred_masks), mean_batch_iou)
 
                 # iou += (mean_batch_iou / len(pred_masks))
