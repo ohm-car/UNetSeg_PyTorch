@@ -36,6 +36,12 @@ def create_model():
     model.classifier.append(nn.Softmax(dim=0))
     return model
 
+def create_model_gtSeg():
+
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
+
+    return model
+
 def predict_img(net,
                 full_img,
                 device,
@@ -107,6 +113,8 @@ def get_args():
                         help='Manual Seed for reproducability', dest='manual_seed')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
+    parser.add_argument('-md', '--mode', dest='mode', type=str, default='multiloss',
+                        help='Predictions Type; Multiloss or GT Segmentation')
 
     return parser.parse_args()
 
@@ -246,7 +254,12 @@ if __name__ == "__main__":
     # train_dataset, val_dataset = get_datasets(dataset, val_percent)
 
     # net = UNet(n_channels=3, n_classes=1)
-    net = create_model()
+
+    if args.mode == 'multiloss':
+        net = create_model()
+    elif args.mode == 'gt_seg':
+        net = create_model_gtSeg()
+
     logging.info("Loading model {}".format(args.model))
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
@@ -314,7 +327,12 @@ if __name__ == "__main__":
                 # print(type(imgs[i]))
                 # img = dataset.preprocess(imgs[i], args.scale, isImage=True)
                 recmasks = net(img)
-                pred_recon_img, pred_mask = recmasks['aux'], recmasks['out']
+                print(recmasks.keys())
+
+                if args.mode == 'multiloss':
+                    pred_recon_img, pred_mask = recmasks['aux'], recmasks['out']
+                elif args.mode == 'gt_seg':
+                    pred_mask = recmasks['out']
 
                 print(pred_mask.shape)
 
@@ -349,14 +367,15 @@ if __name__ == "__main__":
             out_fn = '{}/{}'.format(dir_result, fname)
             print("out_fn: ", out_fn)
             # print(pred_mask.cpu().numpy().shape)
-            result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
+            if args.mode == 'multiloss':
+                result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
+                result_im.save('{}_RI.png'.format(out_fn))
             # result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
             result_mask = mask_to_image(img, pred_mask, cmap)
             result_median = mask_median(pred_mask)
             result_rounded = rounded_mask(pred_mask)
             # result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
 
-            result_im.save('{}_RI.png'.format(out_fn))
             result_mask.save('{}_M.png'.format(out_fn))
             # result_rounded_im.save('{}_RM.png'.format(out_fn))
 
