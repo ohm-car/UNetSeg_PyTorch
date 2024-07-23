@@ -210,7 +210,7 @@ def train_net(args,
                     if True:
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
-                    save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
+                    # save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
 
         if save_cp:
             try:
