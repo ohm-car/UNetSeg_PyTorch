@@ -12,12 +12,15 @@ def eval_net(net, loader, device, regularizer, epoch):
     net.eval()
     # mask_type = torch.float32 if net.n_classes == 1 else torch.long
     n_val = len(loader)  # the number of batch
-    print("n_val: ", n_val)
+    # print("n_val: ", n_val)
     seg_loss = 0
     mask_loss = 0
     iou = 0
     tot = 0
     iou_metric = BinaryJaccardIndex()
+
+    for batch in loader:
+        print('batch')
 
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
         for batch in loader:
