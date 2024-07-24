@@ -308,6 +308,9 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
+    torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
+    torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
+
     try:
         train_net(args=args,
                   net=net,
