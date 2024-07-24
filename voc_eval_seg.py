@@ -5,6 +5,7 @@ from utils.percLoss import percLoss
 from dice_loss import dice_coeff
 from torchmetrics.classification import BinaryJaccardIndex
 from torchmetrics.functional.classification import binary_jaccard_index, multiclass_jaccard_index
+from torchmetrics.functional.segmentation import mean_iou
 
 
 def eval_net(net, loader, device, regularizer, epoch):
