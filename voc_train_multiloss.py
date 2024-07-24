@@ -49,7 +49,7 @@ def create_model():
                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
                  nn.Sigmoid())
     model.aux_classifier = aux
-    # model.classifier.append(nn.Softmax(dim=0))
+    model.classifier.append(nn.Softmax(dim=0))
     return model
 
 
@@ -318,9 +318,9 @@ if __name__ == '__main__':
 
     net.to(device=device)
     # torchsummary.summary(net, input_size=(3, 160, 160))
-    torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
-    torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
-    torchsummary.summary(net.aux_classifier, input_size=(1024, args.im_res, args.im_res))
+    # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
+    # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
+    # torchsummary.summary(net.aux_classifier, input_size=(1024, args.im_res, args.im_res))
 
     # net.to(device=device)
     # faster convolutions, but more memory

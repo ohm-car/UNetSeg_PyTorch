@@ -278,7 +278,7 @@ if __name__ == '__main__':
     # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
     net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
-    # net.classifier.append(nn.Softmax(dim=0))
+    net.classifier.append(nn.Softmax(dim=0))
     print(net.classifier)
 
     # net = nn.DataParallel(net)
@@ -310,8 +310,8 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
-    torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
+    # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
+    # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
 
     try:
         train_net(args=args,
