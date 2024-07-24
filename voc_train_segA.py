@@ -245,7 +245,7 @@ def get_args():
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
     parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
                         help='Root Directory for dataset', dest='rd')
-    parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=160,
+    parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
 
     return parser.parse_args()
