@@ -54,7 +54,7 @@ def eval_net(net, loader, device, regularizer, epoch):
                 #     mean_batch_iou += single_iou
 
                 # batch_iou = multiclass_jaccard_index(pred_masks, amax_true_masks, num_classes=21)
-                print("Sanity Check: ", torch.argmax(pred_masks, dim=1).shape)
+                print("Sanity Check: ", torch.sum(pred_masks, dim=1) == 1)
                 class_mIU = mean_iou(torch.argmax(pred_masks, dim=1), true_masks, num_classes=21, per_class=True)
                 class_bmIU = torch.mean(class_mIU, 0)
                 print("Mean IoU per class: ", class_bmIU, class_bmIU.shape)
