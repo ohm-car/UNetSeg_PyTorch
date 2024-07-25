@@ -49,7 +49,7 @@ def create_model():
                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
                  nn.Sigmoid())
     model.aux_classifier = aux
-    model.classifier.append(nn.Softmax(dim=3))
+    model.classifier.append(nn.Softmax(dim=4))
     return model
 
 
