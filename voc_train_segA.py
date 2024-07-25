@@ -278,7 +278,7 @@ if __name__ == '__main__':
     # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
     net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
-    net.classifier.append(nn.Softmax(dim=0))
+    net.classifier.append(nn.Softmax(dim=4))
     print(net.classifier)
 
     # net = nn.DataParallel(net)
