@@ -54,13 +54,19 @@ def eval_net(net, loader, device, regularizer, epoch):
                 #     mean_batch_iou += single_iou
 
                 # batch_iou = multiclass_jaccard_index(pred_masks, amax_true_masks, num_classes=21)
+
                 class_mIU = mean_iou(torch.argmax(pred_masks, dim=1), true_masks, num_classes=21, per_class=True)
                 print("Class_mIU size: ", class_mIU.shape)
                 class_bmIU = torch.mean(class_mIU, 0)
-                print("Mean IoU per class: ", class_bmIU, class_bmIU.shape)
-                mIU = mean_iou(torch.argmax(F.softmax(pred_masks, dim=1), dim=1), true_masks, num_classes=21, per_class=False)
+                print("Old Mean IoU per class: ", class_bmIU, class_bmIU.shape)
+                mIU = mean_iou(torch.argmax(pred_masks, dim=1), true_masks, num_classes=21, per_class=False)
                 bmIU = torch.mean(mIU, 0)
-                print("Mean IoU overall: ", bmIU, bmIU.shape)
+                print("Old Mean IoU overall: ", bmIU, bmIU.shape)
+
+                tbc_ious = (class_mIU != 0)*1
+                new_mIU = (torch.sum(class_mIU, dim=0) / torch.sum(tbc_ious, dim=0))
+                print("New Mean IoU per class: ", new_mIU)
+                print("New Mean IoU overall: ", torch.mean(new_mIU))
                 test_iou = multiclass_jaccard_index(F.softmax(pred_masks, dim=1), true_masks, num_classes=21, average=None)
                 print("Test IoU: ", test_iou)
                 batch_iou = multiclass_jaccard_index(F.softmax(pred_masks, dim=1), true_masks, num_classes=21)
