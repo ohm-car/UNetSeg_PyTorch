@@ -34,6 +34,7 @@ def eval_net(net, loader, device, regularizer, epoch):
             with torch.no_grad():
                 pred_masks = net(imgs)['out']
                 pred_masks = F.softmax(pred_masks, dim=1)
+                print("Assertion: ", torch.mean(torch.sum(pred_masks, dim=1)))
                 print("Predictions Shape: ", pred_masks.shape)
                 print("Targets Shape: ", true_masks.shape)
 
