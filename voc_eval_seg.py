@@ -64,7 +64,7 @@ def eval_net(net, loader, device, regularizer, epoch):
                 print("Old Mean IoU overall: ", bmIU, bmIU.shape)
 
                 tbc_ious = (class_mIU != 0)*1
-                new_mIU = (torch.sum(class_mIU, dim=0) / torch.sum(tbc_ious, dim=0))
+                new_mIU = (torch.sum(class_mIU, dim=0) / (torch.sum(tbc_ious, dim=0) + 0.000001))
                 print("New Mean IoU per class: ", new_mIU)
                 print("New Mean IoU overall: ", torch.mean(new_mIU))
                 test_iou = multiclass_jaccard_index(F.softmax(pred_masks, dim=1), true_masks, num_classes=21, average=None)
