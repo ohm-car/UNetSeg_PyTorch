@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
     logging.info(f'Network:\n'
                  f'\t{3} input channels\n'
-                 f'\t{21} output channels (classes)\n'
+                 f'\t{2} output channels (classes)\n'
                  # f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
                  )
 
