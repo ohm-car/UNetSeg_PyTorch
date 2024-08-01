@@ -72,10 +72,10 @@ class BUSIDataset(Dataset):
             if fname[-1] == ')':
                 file_list.append(f'benign/{fname}')
 
-        # for i in os.listdir(os.path.join(path, 'malignant')):
-        #     fname = i.split('.')[0]
-        #     if fname[-1] == ')':
-        #         file_list.append(f'malignant/{fname}')
+        for i in os.listdir(os.path.join(path, 'malignant')):
+            fname = i.split('.')[0]
+            if fname[-1] == ')':
+                file_list.append(f'malignant/{fname}')
 
         return file_list
 
