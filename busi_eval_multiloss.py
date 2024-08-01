@@ -12,8 +12,8 @@ def eval_net(net, loader, device, regularizer, epoch):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
     # mask_type = torch.float32 if net.n_classes == 1 else torch.long
-    n_val = max(len(loader), 1)  # the number of batch
-    print("n_val: ", n_val)
+    n_val = len(loader)  # the number of batch
+    # print("n_val: ", n_val)
     seg_loss = 0
     mask_loss = 0
     iou = 0
@@ -100,5 +100,6 @@ def eval_net(net, loader, device, regularizer, epoch):
             pbar.update()
 
     net.train()
+    n_val = max(n_val, 1)
     print("Epoch: ", epoch, "Val IOU: ", iou / n_val)
     return tot / n_val, mask_loss / n_val, seg_loss / n_val, iou / n_val
