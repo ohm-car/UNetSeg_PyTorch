@@ -12,7 +12,7 @@ def eval_net(net, loader, device, regularizer, epoch):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
     # mask_type = torch.float32 if net.n_classes == 1 else torch.long
-    n_val = len(loader)  # the number of batch
+    n_val = max(len(loader), 1)  # the number of batch
     print("n_val: ", n_val)
     seg_loss = 0
     mask_loss = 0
