@@ -25,5 +25,5 @@ source activate unet
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/voc_train_multiloss.py -b=72 -e=800
 python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_train_multiloss.py -e=200 -b=72 -ir=224
 
-# mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.log
-# mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.err
+mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.log
+mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.err
