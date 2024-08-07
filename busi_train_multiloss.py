@@ -121,7 +121,7 @@ def train_net(args,
 
     weight_recon_loss, weight_percLoss = 1, 1
 
-    save_iou_thresh = 0.15
+    save_iou_thresh = 0.45
 
     for epoch in range(epochs):
         net.train()
@@ -208,7 +208,7 @@ def train_net(args,
                     if True:
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
-                    # save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
+                    save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
 
         if save_cp:
             try:
@@ -220,7 +220,7 @@ def train_net(args,
             torch.save(net.state_dict(),
                        dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
-            save_iou_thresh = val_score[3] * 1.1
+            save_iou_thresh = val_score[3] * 1.05
 
     writer.close()
 
