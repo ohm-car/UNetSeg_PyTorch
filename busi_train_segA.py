@@ -13,13 +13,13 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 
-from voc_eval_seg import eval_net
+from busi_eval_seg import eval_net
 from unet import UNet
 # from unet.voc_unet_model_seg import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss_pl import PascalVOCDataset
-from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.BUSI_multiloss import BUSIDataset
 # from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
@@ -58,10 +58,10 @@ def train_net(args,
     dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
     print(dir_mask, type(dir_mask))
     tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/pascalVOC/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+    dir_checkpoint = 'checkpoints/busi/segmentation/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
+    dataset = BUSIDataset(root_dir, im_res = args.im_res)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -146,7 +146,8 @@ def train_net(args,
                 # pcLoss = weight_percLoss * pcLossCriterion(pred_mask, imgs_percs)
                 # total_loss = loss + pcLoss
 
-                pred_masks = net(imgs)['out']
+                # pred_masks = net(imgs)['out']
+                pred_masks = net(imgs)
                 loss = criterion(pred_masks, masks)
 
                 # epoch_loss += loss.item() + pcLoss.item()
@@ -241,9 +242,9 @@ def get_args():
                         help='Learning rate', dest='rw')
     parser.add_argument('-sp', '--sampling', metavar='SP', type=str, nargs='?', default=None,
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
-    parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=21,
+    parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=2,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
-    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
+    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path(__file__).resolve().parent.parent/'Datasets',
                         help='Root Directory for dataset', dest='rd')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
@@ -275,11 +276,11 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
-    net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
+    # net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
     # net.classifier.append(nn.Softmax(dim=1))
-    print(net.classifier)
+    # print(net.classifier)
 
     # net = nn.DataParallel(net)
 
@@ -310,7 +311,7 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
+    torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
 
     try:
