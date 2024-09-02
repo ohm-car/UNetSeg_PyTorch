@@ -13,13 +13,11 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 
-from voc_eval_multiloss import eval_net
+from busi_eval_multiloss import eval_net
 from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-# from utils.pascalVOC_multiloss_pl import PascalVOCDataset
-from utils.pascalVOC_multiloss import PascalVOCDataset
-# from utils.petsReconDataset_multiloss import PetsReconDataset
+from utils.BUSI_multiloss import BUSIDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
@@ -41,7 +39,7 @@ dir_checkpoint = None
 def create_model():
 
     # model = fcn_resnet50(aux_loss=True)
-    model = deeplabv3_resnet50(aux_loss=True)
+    model = deeplabv3_resnet50(num_classes = 2, aux_loss=True)
     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
                  nn.ReLU(inplace=True),
@@ -49,7 +47,7 @@ def create_model():
                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
                  nn.Sigmoid())
     model.aux_classifier = aux
-    model.classifier.append(nn.Softmax(dim=1))
+    # model.classifier.append(nn.Softmax(dim=1))
     return model
 
 
@@ -74,10 +72,10 @@ def train_net(args,
     dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
     print(dir_mask, type(dir_mask))
     tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/pascalVOC/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+    dir_checkpoint = 'checkpoints/BUSI/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
+    dataset = BUSIDataset(root_dir, im_res = args.im_res)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -123,7 +121,7 @@ def train_net(args,
 
     weight_recon_loss, weight_percLoss = 1, 1
 
-    save_iou_thresh = 0.15
+    save_iou_thresh = 0.45
 
     for epoch in range(epochs):
         net.train()
@@ -210,7 +208,7 @@ def train_net(args,
                     if True:
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
-                    # save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
+                    save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
 
         if save_cp:
             try:
@@ -222,7 +220,7 @@ def train_net(args,
             torch.save(net.state_dict(),
                        dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
-            save_iou_thresh = val_score[3] * 1.1
+            save_iou_thresh = val_score[3] * 1.05
 
     writer.close()
 
@@ -254,7 +252,7 @@ def get_args():
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
     parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=21,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
-    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
+    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path(__file__).resolve().parent.parent/'Datasets',
                         help='Root Directory for dataset', dest='rd')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
@@ -306,7 +304,7 @@ if __name__ == '__main__':
 
     logging.info(f'Network:\n'
                  f'\t{3} input channels\n'
-                 f'\t{21} output channels (classes)\n'
+                 f'\t{2} output channels (classes)\n'
                  # f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
                  )
 

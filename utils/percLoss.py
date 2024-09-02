@@ -25,6 +25,7 @@ class percLoss(nn.Module):
 
         #target: Value between 0 and 1, obtained from CSV
         #pred_mask: A tensor with the shape of the image, and channels equal to number of classes. For now 1 channel.
+        # print(pred_mask.size())
 
         # Bernoulli differentiable sampler, If required. Not used by default.
         if(self.sampler == 'bernoulli'):
@@ -88,8 +89,14 @@ class percLoss(nn.Module):
         return torch.pow(torch.tensor(0.5), 2) - torch.mean(torch.pow(0.5 - pred_mask, 2))
 
     def bc_entropy(self, pred_mask):
-        targets = torch.round(pred_mask)
-        return F.binary_cross_entropy(pred_mask, targets)
+
+        # print('Pred Mask shape: ', pred_mask.size())
+        targets = torch.argmax(pred_mask, dim=1)
+        # print('Targets Shape: ', targets.size())
+        return F.cross_entropy(pred_mask, targets)
+
+        # targets = torch.round(pred_mask)
+        # return F.binary_cross_entropy(pred_mask, targets)
 
     def bernoulli_sample(self, pred_mask):
 

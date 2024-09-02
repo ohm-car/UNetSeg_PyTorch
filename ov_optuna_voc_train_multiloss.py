@@ -12,14 +12,14 @@ from torch import optim
 from tqdm import tqdm
 import torchsummary
 import datetime
+import optuna
 
 from voc_eval_multiloss import eval_net
-from unet import UNet
+# from unet import UNet
 
 from torch.utils.tensorboard import SummaryWriter
-# from utils.pascalVOC_multiloss_pl import PascalVOCDataset
-from utils.pascalVOC_multiloss import PascalVOCDataset
-# from utils.petsReconDataset_multiloss import PetsReconDataset
+from utils.pascalVOC_multiloss_pl import PascalVOCDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
@@ -38,6 +38,27 @@ dir_mask = None
 tm = datetime.datetime.now()
 dir_checkpoint = None
 
+def get_dataloaders(args,
+                    val_percent=0.1):
+
+    global n_train, n_val
+
+    root_dir = args.rd
+    print("Root_Dir: ", root_dir)
+    # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+
+
+    dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
+    n_val = int(len(dataset) * val_percent)
+    n_train = len(dataset) - n_val
+    train, val = random_split(dataset, [n_train, n_val])
+
+    train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True, num_workers = 2)
+    val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2, pin_memory=True)
+
+    return train_loader, val_loader
+
 def create_model():
 
     # model = fcn_resnet50(aux_loss=True)
@@ -49,38 +70,57 @@ def create_model():
                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
                  nn.Sigmoid())
     model.aux_classifier = aux
-    model.classifier.append(nn.Softmax(dim=1))
+    model.classifier.append(nn.Softmax(dim=0))
     return model
 
 
-def train_net(args,
-              net,
+def objective(trial,
+              args,
               device,
-              save_freq,
+              train_loader,
+              val_loader,
               epochs=5,
               batch_size=1,
               lr=0.001,
               val_percent=0.1,
-              save_cp=True,
+              save_cp=False,
               img_scale=0.5,
+              save_freq=None,
               regularizer=None,
               regularizer_weight=0.1):
 
-    root_dir = args.rd
+    net = create_model()
+    net.to(device=device)
+
+    # root_dir = args.rd
     print(root_dir, type(root_dir))
     # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-    dir_main = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/ImageSets/Segmentation/')
-    print(dir_img, type(dir_img))
-    dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
-    print(dir_mask, type(dir_mask))
-    tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/pascalVOC/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+    # print(dir_img, type(dir_img))
+    # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
+    # print(dir_mask, type(dir_mask))
+    # tm = datetime.datetime.now()
+    dir_checkpoint = 'checkpoints/optuna/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
+    try:
+        os.makedirs(dir_checkpoint, exist_ok=True)
+        logging.info('Created checkpoint directory')
+    except OSError:
+        sys.exit(99)
+
+    # root_dir = args.rd
+    # print(root_dir, type(root_dir))
+    # # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    # dir_main = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/ImageSets/Segmentation/')
+    # print(dir_img, type(dir_img))
+    # dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
+    # print(dir_mask, type(dir_mask))
+    # tm = datetime.datetime.now()
+    # dir_checkpoint = 'checkpoints/pascalVOC/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
-    n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - n_val
-    train, val = random_split(dataset, [n_train, n_val])
+    # dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
+    # n_val = int(len(dataset) * val_percent)
+    # n_train = len(dataset) - n_val
+    # train, val = random_split(dataset, [n_train, n_val])
     # print(type(dataset),type(train),type(train.dataset))
     # print("Train IDs:", train.dataset.ids)
     # print("Val IDs:", val.dataset.ids)
@@ -89,9 +129,13 @@ def train_net(args,
     # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True)
     # val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
 
+    weight_recon_loss = trial.suggest_float("rec_loss_weight", 1e-1, 1, log=False)
+    regularizer = trial.suggest_categorical("regularizing_fn", ["omkar", "edward", "bce"])
+    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+    optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
+    optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
+    regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers = 2)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers = 2, pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
@@ -99,19 +143,22 @@ def train_net(args,
     logging.info(f'''Starting training:
         Epochs:             {epochs}
         Batch size:         {batch_size}
-        Learning rate:      {lr}
         Training size:      {n_train}
         Validation size:    {n_val}
         Checkpoints:        {save_cp}
         Device:             {device.type}
         Images scaling:     {img_scale}
-        Regularizer:        {regularizer}
-        Regularizer Weight: {regularizer_weight}
-        Mask Sampling:      {args.sp}
-    ''')
+        Mask Sampling:      {args.sp}   \n
 
+        Hyperparameters:
+        Reconstruction Loss Weight: {weight_recon_loss}
+        Regularizer:                {regularizer}
+        Regularizer Weight:         {regularizer_weight}
+        Optimizer:                  {optimizer_name}
+        Learning Rate:              {lr}
+    ''')
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
-    optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
+    # optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     # if net.n_classes > 1:
     #     criterion = nn.L1Loss()
@@ -121,9 +168,7 @@ def train_net(args,
     criterion_recon = nn.L1Loss()
     criterion_mask = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
 
-    weight_recon_loss, weight_percLoss = 1, 1
-
-    save_iou_thresh = 0.15
+    # weight_recon_loss, weight_percLoss = 1, 1
 
     for epoch in range(epochs):
         net.train()
@@ -160,7 +205,7 @@ def train_net(args,
                 loss = weight_recon_loss * criterion_recon(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
-                pcLoss = weight_percLoss * criterion_mask(pred_mask, imgs_percs)
+                pcLoss = criterion_mask(pred_mask, imgs_percs)
                 total_loss = loss + pcLoss
                 epoch_loss += loss.item() + pcLoss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
@@ -192,25 +237,25 @@ def train_net(args,
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     # if net.n_classes > 1:
-                    if True:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
-                        writer.add_scalar('Loss/test', val_score[0], global_step)
-                        writer.add_scalar('Recon/test', val_score[1], global_step)
-                        writer.add_scalar('Perc/test', val_score[2], global_step)
-                        writer.add_scalar('IoU/test', val_score[3], global_step)
-                    else:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
-                        writer.add_scalar('Loss/test', val_score[0], global_step)
-                        writer.add_scalar('Recon/test', val_score[1], global_step)
-                        writer.add_scalar('Perc/test', val_score[2], global_step)
-                        writer.add_scalar('IoU/test', val_score[3], global_step)
+                    # if True:
+                    logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
+                    writer.add_scalar('Loss/test', val_score[0], global_step)
+                    writer.add_scalar('Recon/test', val_score[1], global_step)
+                    writer.add_scalar('Perc/test', val_score[2], global_step)
+                    writer.add_scalar('IoU/test', val_score[3], global_step)
+                    # else:
+                    #     logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
+                    #     writer.add_scalar('Loss/test', val_score[0], global_step)
+                    #     writer.add_scalar('Recon/test', val_score[1], global_step)
+                    #     writer.add_scalar('Perc/test', val_score[2], global_step)
+                    #     writer.add_scalar('IoU/test', val_score[3], global_step)
 
                     writer.add_images('images', imgs, global_step)
                     # if net.n_classes == 1:
-                    if True:
-                        writer.add_images('masks/true', recon_img, global_step)
-                        writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
-                    # save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
+                    # if True:
+                    writer.add_images('masks/true', recon_img, global_step)
+                    writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
+        save_cp = val_score[3] > 0.20
 
         if save_cp:
             try:
@@ -220,11 +265,11 @@ def train_net(args,
                 pass
             # if (epoch + 1) % save_freq == 0:
             torch.save(net.state_dict(),
-                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+                       dir_checkpoint + f'CP_Trial{trial.number}_Epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
-            save_iou_thresh = val_score[3] * 1.1
 
     writer.close()
+    return val_score[3]
 
 
 def get_args():
@@ -288,9 +333,9 @@ if __name__ == '__main__':
     #   - For N > 2 classes, use n_classes=N
     # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
-    net = create_model()
-    print(net.classifier)
-    print(net.aux_classifier)
+    # net = create_model()
+    # print(net.classifier)
+    # print(net.aux_classifier)
 
     # Multi-GPU
 
@@ -310,37 +355,53 @@ if __name__ == '__main__':
                  # f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
                  )
 
-    if args.load:
-        net.load_state_dict(
-            torch.load(args.load, map_location=device)
-        )
-        logging.info(f'Model loaded from {args.load}')
+    # if args.load:
+    #     net.load_state_dict(
+    #         torch.load(args.load, map_location=device)
+    #     )
+    #     logging.info(f'Model loaded from {args.load}')
 
-    net.to(device=device)
+    # net.to(device=device)
     # torchsummary.summary(net, input_size=(3, 160, 160))
     # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
     # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
     # torchsummary.summary(net.aux_classifier, input_size=(1024, args.im_res, args.im_res))
-
-    # net.to(device=device)
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
+    train_loader, val_loader = get_dataloaders(args)
+
+    study = optuna.create_study(direction='maximize')
+
     try:
-        train_net(args=args,
-                  net=net,
-                  epochs=args.epochs,
-                  batch_size=args.batchsize,
-                  lr=args.lr,
-                  device=device,
-                  img_scale=args.scale,
-                  val_percent=args.val / 100,
-                  save_freq = args.saveFreq,
-                  regularizer = args.reg,
-                  regularizer_weight = args.rw)
+
+        study.optimize(lambda trial : objective(trial,
+                                                args=args,
+                                                epochs=args.epochs,
+                                                batch_size=args.batchsize,
+                                                device=device,
+                                                train_loader = train_loader,
+                                                val_loader = val_loader,
+                                                img_scale=args.scale,
+                                                val_percent=args.val / 100,
+                                                save_cp = False,
+                                                save_freq = args.saveFreq), n_trials = 100)
+
+
+        # train_net(args=args,
+        #           net=net,
+        #           epochs=args.epochs,
+        #           batch_size=args.batchsize,
+        #           lr=args.lr,
+        #           device=device,
+        #           img_scale=args.scale,
+        #           val_percent=args.val / 100,
+        #           save_freq = args.saveFreq,
+        #           regularizer = args.reg,
+        #           regularizer_weight = args.rw)
     except KeyboardInterrupt:
-        torch.save(net.state_dict(), 'INTERRUPTED.pth')
-        logging.info('Saved interrupt')
+        # torch.save(net.state_dict(), 'INTERRUPTED.pth')
+        # logging.info('Saved interrupt')
         try:
             sys.exit(0)
         except SystemExit:

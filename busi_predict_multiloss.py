@@ -8,14 +8,40 @@ import csv
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import DataLoader, random_split
 
 from unet import UNet
 from utils.data_vis import plot_img_and_mask
-from utils.petsReconDataset_multiloss import PetsReconDataset
+# from utils.pascalVOC_multiloss_pl import PascalVOCDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.BUSI_multiloss import BUSIDataset
 
+from torchvision.models.segmentation import fcn_resnet50, FCN
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
+
+
+def create_model():
+
+    # model = fcn_resnet50(aux_loss=True)
+    model = deeplabv3_resnet50(num_classes = 2, aux_loss=True)
+    aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+                 nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+                 nn.ReLU(inplace=True),
+                 nn.Dropout(p=0.1, inplace=False),
+                 nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+                 nn.Sigmoid())
+    model.aux_classifier = aux
+    # model.classifier.append(nn.Softmax(dim=1))
+    return model
+
+def create_model_gtSeg():
+
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
+
+    return model
 
 def predict_img(net,
                 full_img,
@@ -86,6 +112,10 @@ def get_args():
                         default=0.5)
     parser.add_argument('-ms', '--manualSeed', metavar='MS', type=int, default=0,
                         help='Manual Seed for reproducability', dest='manual_seed')
+    parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
+                        help='Input Image resolution')
+    parser.add_argument('-md', '--mode', dest='mode', type=str, default='multiloss',
+                        help='Predictions Type; Multiloss or GT Segmentation')
 
     return parser.parse_args()
 
@@ -108,8 +138,10 @@ def get_output_filenames(args):
     return out_files
 
 
-# def mask_to_image(mask):
-#     return Image.fromarray((mask * 255).astype(np.uint8))
+def mask_to_image(mask):
+    mask = np.argmax(mask, axis=0)
+    print("DEB3: ", mask.shape)
+    return Image.fromarray((mask * 255).astype(np.uint8))
 
 def imrecon_to_image(img):
     
@@ -118,16 +150,30 @@ def imrecon_to_image(img):
     # print(mask.shape)
     return Image.fromarray((img * 255).astype(np.uint8), 'RGB')
 
-def mask_to_image(mask):
+# def mask_to_image(mask):
     
-    #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
-    # print(mask.shape, type(mask))
-    # mask = mask.transpose((1,2,0))
-    # thres_mask = mask > 0.3
-    # print(mask.shape, type(mask))
-    mask = np.clip(mask, 0, 1)
-    return Image.fromarray((mask * 255).astype(np.uint8), 'L')
-    # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
+#     #Change this function to get either actual probabilities or the final image; by setting a threshold probability.
+#     # print(mask.shape, type(mask))
+#     # mask = mask.transpose((1,2,0))
+#     # thres_mask = mask > 0.3
+#     # print(mask.shape, type(mask))
+#     # mask = np.clip(mask, 0, 1)
+#     mask = torch.argmax(mask, dim=1)
+#     print(mask.shape)
+#     t = transforms.ToPILImage()
+#     return t(mask)
+#     # return Image.fromarray((thres_mask * 240).astype(np.uint8), 'L')
+
+# def mask_to_image(img, mask, cmap):
+
+#     mask = torch.squeeze(mask)
+#     mask = torch.argmax(mask, dim=0)
+#     # print("Inside mask processing ", mask.shape)
+
+#     m2 = Image.fromarray(mask.byte().cpu().numpy())
+#     m2.putpalette(cmap)
+
+#     return m2
 
 def get_dataloaders(dataset, val_percent, batch_size):
 
@@ -160,6 +206,26 @@ def rounded_mask(mask):
     mask = torch.round(mask)
     return mask
 
+def color_map(N=256, normalized=False):
+    def bitget(byteval, idx):
+        return ((byteval & (1 << idx)) != 0)
+
+    dtype = 'float32' if normalized else 'uint8'
+    cmap = np.zeros((N, 3), dtype=dtype)
+    for i in range(N):
+        r = g = b = 0
+        c = i
+        for j in range(8):
+            r = r | (bitget(c, 0) << 7-j)
+            g = g | (bitget(c, 1) << 7-j)
+            b = b | (bitget(c, 2) << 7-j)
+            c = c >> 3
+
+        cmap[i] = np.array([r, g, b])
+
+    cmap = cmap/255 if normalized else cmap
+    return cmap
+
 
 if __name__ == "__main__":
     args = get_args()
@@ -169,26 +235,34 @@ if __name__ == "__main__":
 
     torch.manual_seed(args.manual_seed)
 
-    #Code to get train and val dataloaders. Use PetsDataset from utils
+    cmap = color_map()[:21]
 
-    root_dir = Path().resolve().parent
+    #Code to get train and val dataloaders. Use dataset from utils
+
+    root_dir = Path(__file__).resolve().parent.parent/'Datasets'
     print("Root dir: ", root_dir)
-    dir_img = os.path.join(root_dir, 'data/images/')
-    dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
+    # dir_img = os.path.join(root_dir, 'data/images/')
+    # dir_mask = os.path.join(root_dir, 'data/annotations/trimaps/')
 
     tm = datetime.now()
-    dir_result = os.path.join(root_dir, 'Validation_Runs/{:02d}-{:02d}'.format(tm.month, tm.day))
+    dir_result = os.path.join(root_dir.parent, 'Validation_Runs/{:02d}-{:02d}'.format(tm.month, tm.day))
     print("Result dir:", dir_result)
     os.makedirs(dir_result, exist_ok = True)
 
-    petsDataset = PetsReconDataset(dir_img, dir_mask, args.scale)
-    # print(petsDataset.__len__())
+    dataset = BUSIDataset(root_dir, im_res = args.im_res)
+    # print(dataset.__len__())
 
-    train_loader, val_loader = get_dataloaders(petsDataset, val_percent, batch_size)
+    train_loader, val_loader = get_dataloaders(dataset, val_percent, batch_size)
 
-    # train_dataset, val_dataset = get_datasets(petsDataset, val_percent)
+    # train_dataset, val_dataset = get_datasets(dataset, val_percent)
 
-    net = UNet(n_channels=3, n_classes=1)
+    # net = UNet(n_channels=3, n_classes=1)
+
+    if args.mode == 'multiloss':
+        net = create_model()
+    elif args.mode == 'gt_seg':
+        net = create_model_gtSeg()
+
     logging.info("Loading model {}".format(args.model))
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
@@ -205,11 +279,11 @@ if __name__ == "__main__":
 
     #Create new csv
 
-    f = open(dir_result + str('/AA_percentages.csv'), 'w')
-    csvwriter = csv.writer(f)
-    csvwriter.writerow(['Image ID', 'Actual perc', 'Val Predicted perc', 'Val Rounded perc', 'Median'])
+    # f = open(dir_result + str('/AA_percentages.csv'), 'w')
+    # csvwriter = csv.writer(f)
+    # csvwriter.writerow(['Image ID', 'Actual perc', 'Val Predicted perc', 'Val Rounded perc', 'Median'])
 
-    percs_gt = petsDataset.getPercsDict('')
+    # percs_gt = dataset.getPercsDict('')
 
     # for fname in val_dataset.get_filenames():
 
@@ -246,16 +320,27 @@ if __name__ == "__main__":
     for batch in val_loader:
         net.eval()
         imgs = batch['image']
+        masks = batch['mask']
         imgs = imgs.to(device=device, dtype=torch.float32)
         for i in range(batch_size):
             with torch.no_grad():
 
                 # print(imgs.shape, imgs[i].shape)
                 img = torch.unsqueeze(imgs[i], 0)
+                mask = masks[i]
+                print("Mask SHAPE: ", mask.shape)
                 # print(img.shape)
                 # print(type(imgs[i]))
-                # img = petsDataset.preprocess(imgs[i], args.scale, isImage=True)
-                pred_recon_img, pred_mask = net(img)
+                # img = dataset.preprocess(imgs[i], args.scale, isImage=True)
+                recmasks = net(img)
+                # print(recmasks.keys())
+
+                if args.mode == 'multiloss':
+                    pred_recon_img, pred_mask = recmasks['aux'], recmasks['out']
+                elif args.mode == 'gt_seg':
+                    pred_mask = recmasks['out']
+
+                print(pred_mask.shape)
 
                 # print('ReconIM shape:', pred_recon_img.shape)
                 # print('Mask shape:', pred_mask.shape)
@@ -283,39 +368,53 @@ if __name__ == "__main__":
                 # # print('mask_probs shape:', mask_probs.shape)
                 # full_mask = mask_probs.squeeze().cpu().numpy()
 
-            fname = batch['image_ID'][i]
+            # fname = batch['image_ID'][i]
+            fname = batch['image_ID'][i].split('/')[-1]
             print("fname: ", fname)
             out_fn = '{}/{}'.format(dir_result, fname)
             print("out_fn: ", out_fn)
             # print(pred_mask.cpu().numpy().shape)
-            result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
+            if args.mode == 'multiloss':
+                result_im = imrecon_to_image(pred_recon_img.squeeze().cpu().numpy())
+                result_im.save('{}_RI.png'.format(out_fn))
+            print("DEB1: ", pred_mask.squeeze().shape)
+            print("DEB2: ", pred_mask.squeeze().cpu().numpy().shape)
             result_mask = mask_to_image(pred_mask.squeeze().cpu().numpy())
+            # result_mask = mask_to_image(img, pred_mask, cmap)
             result_median = mask_median(pred_mask)
             result_rounded = rounded_mask(pred_mask)
-            result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
+            # result_rounded_im = mask_to_image(result_rounded.squeeze().cpu().numpy())
 
-            result_im.save('{}_RI.png'.format(out_fn))
             result_mask.save('{}_M.png'.format(out_fn))
-            result_rounded_im.save('{}_RM.png'.format(out_fn))
+
+            mask = mask.squeeze().cpu().numpy()
+            mask = Image.fromarray((mask * 255).astype(np.uint8))
+            mask.save('{}_OGM.png'.format(out_fn))
+
+            # result_rounded_im.save('{}_RM.png'.format(out_fn))
+            og_img = imrecon_to_image(img.squeeze().cpu().numpy())
+            og_img.save('{}_OGI.png'.format(out_fn))
+
+
 
             # key = '{}.png'.format(fname)
             key = fname
             print(key)
             # print(list(percs_gt.items())[:3])
 
-            pred_perc = torch.mean(torch.squeeze(pred_mask, 0), (1,2))
-            pred_perc = torch.unsqueeze(pred_perc, 1)
+            # pred_perc = torch.mean(torch.squeeze(pred_mask, 0), (1,2))
+            # pred_perc = torch.unsqueeze(pred_perc, 1)
 
-            pred_perc_rounded = torch.mean(torch.squeeze(result_rounded, 0), (1,2))
-            pred_perc_rounded = torch.unsqueeze(pred_perc_rounded, 1)
-            csvwriter.writerow([str(fname), str(percs_gt[key]), str(pred_perc.item()), 
-                str(pred_perc_rounded.item()), str(result_median.item())])
+            # pred_perc_rounded = torch.mean(torch.squeeze(result_rounded, 0), (1,2))
+            # pred_perc_rounded = torch.unsqueeze(pred_perc_rounded, 1)
+            # csvwriter.writerow([str(fname), str(percs_gt[key]), str(pred_perc.item()), 
+            #     str(pred_perc_rounded.item()), str(result_median.item())])
 
             logging.info("Mask saved to {}_M.png".format(out_fn))
 
 
     print("Validation Run Complete")
-    f.close()
+    # f.close()
 
 
     # out_files = get_output_filenames(args)

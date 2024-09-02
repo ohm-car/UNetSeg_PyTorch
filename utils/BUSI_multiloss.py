@@ -16,16 +16,16 @@ import numpy as np
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
-class PascalVOCDataset(Dataset):
-    def __init__(self, root_dir, masks_dir, percs_dir, im_res = 224, scale=1, mask_suffix=''):
+class BUSIDataset(Dataset):
+    def __init__(self, root_dir, im_res = 224, scale=1, mask_suffix=''):
 
-        self.main_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012')
-        self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
-        self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
-        self.file_list = self.get_filenames(os.path.join(self.main_dir, 'ImageSets/Segmentation/'))
+        self.main_dir = os.path.join(root_dir, 'Dataset_BUSI_with_GT/')
+        # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
+        # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
+        self.file_list = self.get_filenames(self.main_dir)
         # print(self.file_list)
 
-        self.num_classes = 20 + 1 #+1 for background
+        self.num_classes = 1 + 1 #+1 for background
         self.im_res = (im_res, im_res)
         self.scale = scale
         self.mask_suffix = mask_suffix
@@ -65,12 +65,17 @@ class PascalVOCDataset(Dataset):
 
     def get_filenames(self, path):
 
-        filenames = open(os.path.join(path, 'trainval.txt'), 'r')
-        x = filenames.readlines()
         file_list = list()
 
-        for fname in x:
-            file_list.append(fname[:-1])
+        for i in os.listdir(os.path.join(path, 'benign')):
+            fname = i.split('.')[0]
+            if fname[-1] == ')':
+                file_list.append(f'benign/{fname}')
+
+        for i in os.listdir(os.path.join(path, 'malignant')):
+            fname = i.split('.')[0]
+            if fname[-1] == ')':
+                file_list.append(f'malignant/{fname}')
 
         return file_list
 
@@ -150,9 +155,9 @@ class PascalVOCDataset(Dataset):
         idx = self.file_list[i]
         # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
 
-        img_file = glob(self.imgs_dir + idx + '.*')
+        img_file = glob(self.main_dir + idx + '.*')
 
-        mask_file = glob(self.masks_dir + idx + '.*')
+        mask_file = glob(self.main_dir + idx + '_mask' + '.*')
 
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {i}: {img_file}'
@@ -175,8 +180,11 @@ class PascalVOCDataset(Dataset):
 
         M = self.preprocess_mask(M, self.transform)
         # print("Mask tensor type ", M)
+        # print("Mask shape: ", M.shape)
 
-        M = M - ((M == 255) * 255)
+        # M = M - ((M == 255) * 255)
+        assert torch.max(M) == 1.0 and torch.min(M) == 0,\
+            f'Check mask file'
 
         P = self.get_percs(M)
         # print(P)

@@ -10,3 +10,4 @@ runs/
 models_all/
 outfiles/
 FasionMNIST/
+Torch_pretrained_test/

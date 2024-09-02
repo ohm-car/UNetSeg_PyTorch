@@ -14,21 +14,20 @@ import csv
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class PetsReconDataset(Dataset):
-    def __init__(self, imgs_dir, masks_dir, percs_dir, im_res = 160, scale=1, mask_suffix=''):
+    def __init__(self, imgs_dir, masks_dir, percs_dir, scale=1, mask_suffix=''):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
         self.scale = scale
         self.mask_suffix = mask_suffix
         self.percsDict = self.getPercsDict(percs_dir)
-        self.im_res = (im_res, im_res)
         # print(self.percsDict)
         # self.images = self.load_images(imgs_dir)
 
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')][:100]
-        self.images, self.masks, self.percs = self.load_data(imgs_dir, masks_dir)
+                    if not file.startswith('.')]
+        self.images, self.percs = self.load_data(imgs_dir)
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
@@ -42,7 +41,7 @@ class PetsReconDataset(Dataset):
         reader = csv.reader(f)
 
         for row in reader:
-            x[row[0].split('/')[-1].split('.')[0]] = float(row[2])
+            x[row[0].split('/')[-1].split('.')[0]] = float(row[1])
         # print(x)
         return x
 
@@ -104,7 +103,7 @@ class PetsReconDataset(Dataset):
     def preprocess(self, pil_img, transform):
         w, h = pil_img.size
 
-        pil_img = pil_img.resize(self.im_res)
+        pil_img = pil_img.resize((160, 160))
 
         imgT = transform(pil_img)
 
@@ -112,15 +111,6 @@ class PetsReconDataset(Dataset):
         imgT = imgT / 255
 
         return imgT
-
-    def preprocess_mask(self, pil_mask, transform):
-
-        pil_mask = pil_mask.resize(self.im_res)
-
-        imgM = transform(pil_mask)
-        # imgM -= 1
-        # imgM = (imgM > 0) * 1
-        return imgM.float()
 
     # def load_images(self, imgs_dir):
 
@@ -150,10 +140,9 @@ class PetsReconDataset(Dataset):
 
     #     return temp_images
 
-    def load_data(self, imgs_dir, masks_dir):
+    def load_data(self, imgs_dir):
 
         temp_images = list()
-        temp_masks = list()
         temp_percs = list()
 
         transform = transforms.Compose([transforms.PILToTensor()])
@@ -164,45 +153,22 @@ class PetsReconDataset(Dataset):
         for i in self.ids:
 
             img_file = glob(self.imgs_dir + i + '.*')
-            mask_file = glob(self.masks_dir + i + '.*')
 
             assert len(img_file) == 1, \
                 f'Either no image or multiple images found for the ID {idx}: {img_file}'
-
-            assert len(mask_file) == 1, \
-                f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
 
             T = Image.open(img_file[0])
             if T.mode != 'RGB':
                 T = T.convert(mode = 'RGB')
 
             T = self.preprocess(T, transform)
-            # print("Image tensor type ", T)
-
-
-            M = Image.open(mask_file[0])
-            # print(M.mode)
-            assert M.mode == 'L' or M.mode == '1', \
-                f'Error with file {mask_file}'
-
-            M = self.preprocess_mask(M, transform)
-            # print("Mask tensor type ", M)
-
-            M1 = ((M == 1) * 1).float()
-            M2 = ((M == 2) * 1).float()
-            M3 = ((M == 3) * 1).float()
-
-            Mp = M1 + M3
-
             # print(i)
             temp_images.append(T)
-            temp_masks.append(Mp)
             temp_percs.append(torch.Tensor([self.percsDict[i]]))
-            # print(i, torch.mean(torch.Tensor(M1)), torch.mean(torch.Tensor(M2)), torch.mean(torch.Tensor(M3)), torch.Tensor([self.percsDict[i]]))
 
         print('Loaded Dataset')
 
-        return temp_images, temp_masks, temp_percs
+        return temp_images, temp_percs
 
     # def __getitem__(self, i):
 
@@ -230,16 +196,10 @@ class PetsReconDataset(Dataset):
 
     def __getitem__(self, i):
 
-        idx = self.ids[i]
-        # print("idx: ", idx)
-        img_file = glob(self.imgs_dir + idx + '.*')
-        # print("img_file: ", img_file)
-
         return {
-            'image_ID': idx,
+            # 'image_ID': img_file[0] + idx,
             'image': self.images[i],
             'reconstructed_image': self.images[i],
-            'mask': self.masks[i],
             'mask_perc': self.percs[i]
         }
 
