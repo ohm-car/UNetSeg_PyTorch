@@ -15,11 +15,11 @@ import datetime
 import optuna
 
 from eval_multiloss import eval_net
-from unet import UNet
+from unet.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss import PascalVOCDataset
-from utils.petsReconDataset_multiloss import PetsReconDataset
+from utils.petsReconDataset_multiloss_pl import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
@@ -210,7 +210,7 @@ def objective(trial,
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
 
-        save_cp = val_score[3] > 0.55
+                    save_cp = val_score[3] > 0.55
 
         if save_cp:
             torch.save(net.state_dict(),
