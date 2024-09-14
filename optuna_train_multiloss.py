@@ -58,12 +58,29 @@ def get_dataloaders(args,
 
     return train_loader, val_loader
 
+def get_model():
+
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+    logging.info(f'Network:\n'
+                 f'\t{net.n_channels} input channels\n'
+                 f'\t{net.n_classes} output channels (classes)\n'
+                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+
+    if args.load:
+        net.load_state_dict(
+            torch.load(args.load, map_location=device)
+        )
+        logging.info(f'Model loaded from {args.load}')
+
+    net.to(device=device)
+    return net
+
 def objective(trial,
               args,
-              net,
               device,
               train_loader,
               val_loader,
+              net=None,
               epochs=5,
               batch_size=1,
               lr=0.001,
@@ -87,6 +104,8 @@ def objective(trial,
         logging.info('Created checkpoint directory')
     except OSError:
         sys.exit(99)
+
+    net = get_model()
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     # n_val = int(len(dataset) * val_percent)

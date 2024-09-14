@@ -57,7 +57,7 @@ def train_net(args,
     tm = datetime.datetime.now()
     dir_checkpoint = 'checkpoints/multiloss/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
 
-    dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
+    dataset = PetsReconDataset(dir_img, dir_mask, None, args.im_res)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -188,7 +188,7 @@ def get_args():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-e', '--epochs', metavar='E', type=int, default=5,
                         help='Number of epochs', dest='epochs')
-    parser.add_argument('-sf', '--saveFreq', metavar='SF', type=int, default=1,
+    parser.add_argument('-sf', '--saveFreq', metavar='SF', type=int, default=10,
                         help='Save every sf epochs', dest='saveFreq')
     parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=4,
                         help='Batch size', dest='batchsize')
@@ -212,6 +212,8 @@ def get_args():
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
     parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
                         help='Root Directory for dataset', dest='rd')
+    parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=160,
+                        help='Input Image resolution')
 
     return parser.parse_args()
 
@@ -253,7 +255,7 @@ if __name__ == '__main__':
         logging.info(f'Model loaded from {args.load}')
 
     net.to(device=device)
-    torchsummary.summary(net, input_size=(3, 160, 160))
+    torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
