@@ -153,8 +153,8 @@ def train_net(args,
                 # writer.add_scalar('Loss/train', total_loss.item(), global_step)
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
-                pbar.set_postfix(**{'percLoss (batch)': loss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': loss.item()})
-                # pbar.set_postfix(**{'mask loss': loss.item(), 'mask loss': loss.item(), 'mask loss': loss.item()})
+                # pbar.set_postfix(**{'percLoss (batch)': loss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': loss.item()})
+                pbar.set_postfix(**{'mask loss': loss.item()})
 
                 optimizer.zero_grad()
                 # total_loss.backward()
