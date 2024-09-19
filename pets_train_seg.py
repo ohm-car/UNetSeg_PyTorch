@@ -152,7 +152,7 @@ def train_net(args,
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
                 # pbar.set_postfix(**{'percLoss (batch)': pcLoss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
-                pbar.set_postfix(**{'mask loss': loss.item()})
+                pbar.set_postfix(**{'mask loss': loss.item(), 'mask loss': loss.item(), 'mask loss': loss.item()})
 
                 optimizer.zero_grad()
                 # total_loss.backward()
@@ -209,7 +209,7 @@ def train_net(args,
             torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
-            save_iou_thresh = val_score[3] * 1.1
+            save_iou_thresh = val_score[1] * 1.1
 
     writer.close()
 
