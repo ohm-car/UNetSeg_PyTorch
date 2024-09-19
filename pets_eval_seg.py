@@ -47,7 +47,7 @@ def eval_net(net, loader, device, regularizer):
                 batch_iou = binary_jaccard_index(pred_mask, true_masks)
                 # print(batch_iou, mean_batch_iou / len(pred_mask), mean_batch_iou)
 
-                print(mean_batch_iou, batch_iou)
+                # print(mean_batch_iou, batch_iou)
                 iou += mean_batch_iou
                 # recon_loss += recon_loss_batch
                 mask_loss += mask_loss_batch
@@ -67,7 +67,7 @@ def eval_net(net, loader, device, regularizer):
                 batch_iou = binary_jaccard_index(pred_mask, true_masks)
                 # print(batch_iou, mean_batch_iou / len(pred_mask), mean_batch_iou)
 
-                print(mean_batch_iou, batch_iou)
+                # print(mean_batch_iou, batch_iou)
                 iou += mean_batch_iou
                 # recon_loss += recon_loss_batch
                 mask_loss += mask_loss_batch
