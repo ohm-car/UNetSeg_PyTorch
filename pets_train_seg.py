@@ -126,7 +126,7 @@ def train_net(args,
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 # masks = masks.to(device=device, dtype=torch.float32)
-                masks = masks.to(device=device, dtype=torch.long)
+                masks = torch.squeeze(masks.to(device=device, dtype=torch.long))
                 # mask_type = torch.float32 if net.n_classes == 1 else torch.
                 print(masks.shape)
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
