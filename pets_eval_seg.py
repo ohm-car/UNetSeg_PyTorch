@@ -34,7 +34,8 @@ def eval_net(net, loader, device, regularizer):
 
             if net.n_classes > 1:
                 # recon_loss_batch = F.l1_loss(pred_recon_img, recon_img).item()
-                criterion = nn.CrossEntropyLoss(reduction='mean')
+                # criterion = nn.CrossEntropyLoss(reduction='mean')
+                criterion = nn.BCEWithLogitsLoss()
                 mask_loss_batch = criterion(pred_mask, true_masks).item()
 
                 mean_batch_iou = 0

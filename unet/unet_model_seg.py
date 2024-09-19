@@ -27,7 +27,7 @@ class UNet(nn.Module):
         self.ext1 = DoubleConv(32, 64)
         self.ext2 = DoubleConv(64, 64)
         self.ext3 = DoubleConv(64, 32)
-        self.outM = OutConv(32, n_classes)
+        self.outM = OutConvSeg(32, n_classes)
 
     def forward(self, x):
         x1 = self.inc(x)

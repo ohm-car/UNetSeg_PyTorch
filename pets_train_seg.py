@@ -99,7 +99,8 @@ def train_net(args,
     # else:
     #     criterion = nn.L1Loss()
 
-    criterion = nn.CrossEntropyLoss(reduction='mean')
+    # criterion = nn.CrossEntropyLoss(reduction='mean')
+    criterion = nn.BCEWithLogitsLoss()
 
     weight_recon_loss, weight_percLoss = 1, 5
 
