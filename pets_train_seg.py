@@ -125,8 +125,8 @@ def train_net(args,
                 #     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                masks = masks.to(device=device, dtype=torch.float32)
-                # masks = masks.to(device=device, dtype=torch.long)
+                # masks = masks.to(device=device, dtype=torch.float32)
+                masks = masks.to(device=device, dtype=torch.long)
                 # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
@@ -182,7 +182,7 @@ def train_net(args,
 
                     # if net.n_classes > 1:
                     if True:
-                        logging.info('Validation L1 loss: Total: {}, Batch IoU: {}'.format(val_score[0], val_score[1]))
+                        logging.info('Validation CE loss: Total: {}, Batch IoU: {}'.format(val_score[0], val_score[1]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
                         writer.add_scalar('IoU/test', val_score[1], global_step)
                     else:
