@@ -19,7 +19,7 @@ import numpy as np
 class BUSIDataset(Dataset):
     def __init__(self, root_dir, im_res = 224, scale=1, mask_suffix=''):
 
-        self.main_dir = os.path.join(root_dir, 'Dataset_BUSI_with_GT/')
+        self.main_dir = os.path.join(root_dir, 'Datasets/Dataset_BUSI_with_GT/')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
         self.file_list = self.get_filenames(self.main_dir)
@@ -53,15 +53,21 @@ class BUSIDataset(Dataset):
     #     # print(x)
     #     return x
 
-    def get_percs(self, mask):
+    # def get_percs(self, mask):
 
-        percs = list()
+    #     percs = list()
 
-        for i in range(self.num_classes):
+    #     for i in range(self.num_classes):
 
-            percs.append(torch.mean((mask == i) * 1.0))
+    #         percs.append(torch.mean((mask == i) * 1.0))
 
-        return torch.tensor(percs)
+    #     return torch.tensor(percs)
+
+    def get_perc(self, mask):
+
+        perc = torch.mean((mask == 1) * 1.0)
+
+        return perc
 
     def get_filenames(self, path):
 
@@ -186,7 +192,7 @@ class BUSIDataset(Dataset):
         assert torch.max(M) == 1.0 and torch.min(M) == 0,\
             f'Check mask file'
 
-        P = self.get_percs(M)
+        P = self.get_perc(M)
         # print(P)
 
         # Mp = M1 + M3
