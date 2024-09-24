@@ -14,7 +14,7 @@ import torchsummary
 import datetime
 
 from busi_eval_seg import eval_net
-from unet import UNet
+from architectures.busi.unet_model_seg import UNet
 # from unet.voc_unet_model_seg import UNet
 
 from torch.utils.tensorboard import SummaryWriter
@@ -102,11 +102,12 @@ def train_net(args,
     # else:
     #     criterion = nn.L1Loss()
 
-    criterion = nn.CrossEntropyLoss(reduction='mean')
+    # criterion = nn.CrossEntropyLoss(reduction='mean')
+    criterion = nn.BCEWithLogitsLoss()
 
     weight_recon_loss, weight_percLoss = 1, 5
 
-    save_iou_thresh = 0.50
+    save_iou_thresh = 0.2
 
     for epoch in range(epochs):
         net.train()
@@ -128,8 +129,8 @@ def train_net(args,
                 #     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                # masks = masks.to(device=device, dtype=torch.float32)
-                masks = masks.to(device=device, dtype=torch.long)
+                masks = masks.to(device=device, dtype=torch.float32)
+                # masks = masks.to(device=device, dtype=torch.long)
                 # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
@@ -242,9 +243,9 @@ def get_args():
                         help='Learning rate', dest='rw')
     parser.add_argument('-sp', '--sampling', metavar='SP', type=str, nargs='?', default=None,
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
-    parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=2,
+    parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=1,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
-    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path(__file__).resolve().parent.parent/'Datasets',
+    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
                         help='Root Directory for dataset', dest='rd')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
