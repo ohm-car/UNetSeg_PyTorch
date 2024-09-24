@@ -14,7 +14,7 @@ import torchsummary
 import datetime
 import optuna
 
-from eval_multiloss import eval_net
+from busi_eval_multiloss import eval_net
 from architectures.busi.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
@@ -173,8 +173,6 @@ def objective(trial,
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
 
-                print(imgs_percs.shape)
-
                 pred_recon_img, pred_mask = net(imgs)
                 # print("Shapes: ", pred_recon_img.shape, pred_mask.shape)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
@@ -211,7 +209,7 @@ def objective(trial,
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device, regularizer)
+                    val_score = eval_net(net, val_loader, device, regularizer, epoch)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 

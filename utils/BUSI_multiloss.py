@@ -67,7 +67,7 @@ class BUSIDataset(Dataset):
 
         perc = torch.mean((mask == 1) * 1.0)
 
-        return perc
+        return torch.unsqueeze(perc, 0)
 
     def get_filenames(self, path):
 
@@ -199,7 +199,8 @@ class BUSIDataset(Dataset):
         # print(M.shape, torch.squeeze(M).shape, M.dtype)
         # Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
         # Mp = torch.permute(torch.squeeze(M), (2, 0, 1))
-        Mp = torch.squeeze(M)
+        # Mp = torch.squeeze(M)
+        Mp = M
 
         return {
             'image_ID': idx,
