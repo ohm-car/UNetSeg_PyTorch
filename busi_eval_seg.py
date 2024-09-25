@@ -34,7 +34,8 @@ def eval_net(net, loader, device, regularizer, epoch):
             true_perc = true_perc.to(device=device, dtype=torch.float32)
 
             with torch.no_grad():
-                pred_masks = net(imgs)
+                # pred_masks = net(imgs)
+                pred_masks = net(imgs)['out']
                 # pred_masks = F.softmax(pred_masks, dim=1)
                 # print("Assertion: ", torch.mean(torch.sum(pred_masks, dim=1)))
                 # print("Predictions Shape: ", pred_masks.shape)

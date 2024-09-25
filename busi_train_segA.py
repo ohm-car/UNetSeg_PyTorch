@@ -23,6 +23,7 @@ from utils.BUSI_multiloss import BUSIDataset
 # from utils.petsReconDataset_multiloss import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 
 # root_dir = Path().resolve().parent
 # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
@@ -35,6 +36,20 @@ dir_img = None
 dir_mask = None
 tm = datetime.datetime.now()
 dir_checkpoint = None
+
+def create_model():
+
+    # model = fcn_resnet50(aux_loss=True)
+    model = deeplabv3_resnet50(num_classes = 1, aux_loss=False)
+    # aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+    #              nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+    #              nn.ReLU(inplace=True),
+    #              nn.Dropout(p=0.1, inplace=False),
+    #              nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+    #              nn.Sigmoid())
+    # model.aux_classifier = None
+    # model.classifier.append(nn.Softmax(dim=1))
+    return model
 
 
 def train_net(args,
@@ -147,8 +162,8 @@ def train_net(args,
                 # pcLoss = weight_percLoss * pcLossCriterion(pred_mask, imgs_percs)
                 # total_loss = loss + pcLoss
 
-                # pred_masks = net(imgs)['out']
-                pred_masks = net(imgs)
+                pred_masks = net(imgs)['out']
+                # pred_masks = net(imgs)
                 loss = criterion(pred_masks, masks)
 
                 # epoch_loss += loss.item() + pcLoss.item()
@@ -277,9 +292,10 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+    # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
+    net = create_model()
     # net.classifier.append(nn.Softmax(dim=1))
     # print(net.classifier)
 
@@ -312,7 +328,7 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
+    # torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
 
     try:
