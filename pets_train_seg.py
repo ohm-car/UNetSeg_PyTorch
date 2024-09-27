@@ -13,17 +13,16 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 
-from busi_eval_seg import eval_net
-from architectures.busi.unet_model_seg import UNet
+from pets_eval_seg import eval_net
+from architectures.pets.unet_model_seg import UNet
 # from unet.voc_unet_model_seg import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss_pl import PascalVOCDataset
-from utils.BUSI_multiloss import BUSIDataset
-# from utils.petsReconDataset_multiloss import PetsReconDataset
+# from utils.pascalVOC_multiloss import PascalVOCDataset
+from utils.petsReconDataset_multiloss_pl import PetsReconDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
-from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 
 # root_dir = Path().resolve().parent
 # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
@@ -36,20 +35,6 @@ dir_img = None
 dir_mask = None
 tm = datetime.datetime.now()
 dir_checkpoint = None
-
-def create_model():
-
-    # model = fcn_resnet50(aux_loss=True)
-    model = deeplabv3_resnet50(num_classes = 1, aux_loss=False)
-    # aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
-    #              nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-    #              nn.ReLU(inplace=True),
-    #              nn.Dropout(p=0.1, inplace=False),
-    #              nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
-    #              nn.Sigmoid())
-    # model.aux_classifier = None
-    # model.classifier.append(nn.Softmax(dim=1))
-    return model
 
 
 def train_net(args,
@@ -66,17 +51,14 @@ def train_net(args,
               regularizer_weight=0.1):
 
     root_dir = args.rd
-    print(root_dir, type(root_dir))
-    # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-    dir_main = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/ImageSets/Segmentation/')
-    print(dir_img, type(dir_img))
-    dir_mask = os.path.join(root_dir, 'Datasets/VOC2012/VOC2012/ImageSets/Segmentation')
+    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
+    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     print(dir_mask, type(dir_mask))
     tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/busi/segmentation/{:02d}-{:02d}/{:02d}-{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute, tm.second)
+    dir_checkpoint = 'checkpoints/pets_seg/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
 
-    # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
-    dataset = BUSIDataset(root_dir, im_res = args.im_res)
+    dataset = PetsReconDataset(dir_img, dir_mask, None, args.im_res)
+    # dataset = PascalVOCDataset(root_dir, None, None, im_res = args.im_res)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -122,7 +104,7 @@ def train_net(args,
 
     weight_recon_loss, weight_percLoss = 1, 5
 
-    save_iou_thresh = 0.2
+    save_iou_thresh = 0.50
 
     for epoch in range(epochs):
         net.train()
@@ -146,7 +128,8 @@ def train_net(args,
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 masks = masks.to(device=device, dtype=torch.float32)
                 # masks = masks.to(device=device, dtype=torch.long)
-                # mask_type = torch.float32 if net.n_classes == 1 else torch.long
+                # mask_type = torch.float32 if net.n_classes == 1 else torch.
+                # print(masks.shape)
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
 
@@ -162,8 +145,7 @@ def train_net(args,
                 # pcLoss = weight_percLoss * pcLossCriterion(pred_mask, imgs_percs)
                 # total_loss = loss + pcLoss
 
-                pred_masks = net(imgs)['out']
-                # pred_masks = net(imgs)
+                pred_masks = net(imgs)
                 loss = criterion(pred_masks, masks)
 
                 # epoch_loss += loss.item() + pcLoss.item()
@@ -171,7 +153,7 @@ def train_net(args,
                 # writer.add_scalar('Loss/train', total_loss.item(), global_step)
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
-                # pbar.set_postfix(**{'percLoss (batch)': pcLoss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
+                # pbar.set_postfix(**{'percLoss (batch)': loss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': loss.item()})
                 pbar.set_postfix(**{'mask loss': loss.item()})
 
                 optimizer.zero_grad()
@@ -196,27 +178,28 @@ def train_net(args,
                         if value.grad is not None:
                             writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                             writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device, regularizer, epoch)
+                    val_score = eval_net(net, val_loader, device, regularizer)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
                     # if net.n_classes > 1:
                     if True:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
+                        logging.info('Validation CE loss: Total: {}, Batch IoU: {}'.format(val_score[0], val_score[1]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
+                        writer.add_scalar('IoU/test', val_score[1], global_step)
                     else:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
+                        logging.info('Validation L1 loss: Total: {}, Batch IoU: {}'.format(val_score[0], val_score[1]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
-                        writer.add_scalar('Recon/test', val_score[1], global_step)
-                        writer.add_scalar('Perc/test', val_score[2], global_step)
-                        writer.add_scalar('IoU/test', val_score[3], global_step)
+                        # writer.add_scalar('Recon/test', val_score[1], global_step)
+                        # writer.add_scalar('Perc/test', val_score[2], global_step)
+                        writer.add_scalar('IoU/test', val_score[1], global_step)
 
                     writer.add_images('images', imgs, global_step)
                     # if net.n_classes == 1:
                     if False:
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
-                    save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
+                    save_cp = (val_score[1] > save_iou_thresh) or (epoch + 1 == epochs)
 
         if save_cp:
             try:
@@ -228,7 +211,7 @@ def train_net(args,
             torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
             logging.info(f'Checkpoint {epoch + 1} saved !')
-            save_iou_thresh = val_score[3] * 1.1
+            save_iou_thresh = val_score[1] * 1.1
 
     writer.close()
 
@@ -292,10 +275,9 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    # net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'fcn_resnet50', pretrained=False)
     # net = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=False)
-    net = create_model()
     # net.classifier.append(nn.Softmax(dim=1))
     # print(net.classifier)
 
@@ -323,12 +305,12 @@ if __name__ == '__main__':
         net.to(device=torch.device('cpu'))
     else:
         net.to(device=device)
-    # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
+    torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
     net.to(device=device)
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    # torchsummary.summary(net, input_size=(3, args.im_res, args.im_res))
+    # torchsummary.summary(net.backbone, input_size=(3, args.im_res, args.im_res))
     # torchsummary.summary(net.classifier, input_size=(2048, args.im_res, args.im_res))
 
     try:

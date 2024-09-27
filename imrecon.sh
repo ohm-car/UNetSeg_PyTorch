@@ -19,11 +19,20 @@ source activate unet
 # unzip -q /scratch/$SLURM_JOBID/Datasets.zip -d /scratch/$SLURM_JOBID
 
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/train_multiloss.py -rd=/scratch/$SLURM_JOBID -b=160 -e=60 -sf=10 -rw=0.1 -r='omkar'
-# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/optuna_train_multiloss.py -rd=/scratch/$SLURM_JOBID -b=128 -e=60
+# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/optuna_train_multiloss.py -b=72 -e=60 -ir=224
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/voc_train_segA.py -e=100 -b=72 -ir=224
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/ov_optuna_voc_train_multiloss.py -b=72 -e=80
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/voc_train_multiloss.py -b=72 -e=800
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_train_multiloss.py -e=200 -b=72 -ir=224
+# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_train_multiloss.py -e=200 -b=72 -ir=224
+# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/pets_train_seg.py -b=64 -e=60 -ir=224
+# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_train_segA.py -b=36 -e=100 -ir=224
+python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -e=160 -b=36 -ir=224
 
-mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.log
-mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.err
+# mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.log
+# mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.err
+
+mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
+mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
+
+# mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/segmentation/output_$DT.log
+# mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/segmentation/output_$DT.err

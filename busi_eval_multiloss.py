@@ -26,6 +26,7 @@ def eval_net(net, loader, device, regularizer, epoch):
             imgs = imgs.to(device=device, dtype=torch.float32)
             # true_masks = true_masks.to(device=device, dtype=torch.float32)
             true_masks = true_masks.to(device=device, dtype=torch.long)
+            # true_masks = torch.unsqueeze(true_masks, 1)
             # print(true_masks.shape)
             # amax_true_masks = torch.argmax(true_masks, dim=1)
             # print(amax_true_masks.shape)
@@ -35,7 +36,9 @@ def eval_net(net, loader, device, regularizer, epoch):
             with torch.no_grad():
                 outs = net(imgs)
                 pred_masks, pred_imgs = outs['out'], outs['aux']
-                pred_masks = F.softmax(pred_masks, dim=1)
+                # pred_masks, pred_imgs = outs[1], outs[0]
+                # pred_masks = torch.squeeze(pred_masks)
+                # pred_masks = F.softmax(pred_masks, dim=1)
                 # print("Predictions Shape: ", pred_masks.shape)
                 # print("Targets Shape: ", true_masks.shape)
 
@@ -65,13 +68,21 @@ def eval_net(net, loader, device, regularizer, epoch):
                 # print("Mean IoU overall: ", bmIU, bmIU.shape)
                 # test_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=2, average=None)
                 # print("Test IoU: ", test_iou)
-                batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=2)
+                # batch_iou = multiclass_jaccard_index(pred_masks, true_masks, num_classes=2)
+
+                mean_batch_iou = 0
+                for i in range(len(pred_masks)):
+                    single_iou = binary_jaccard_index(pred_masks[i], true_masks[i])
+                    # print(single_iou)
+                    mean_batch_iou += single_iou
+
+                batch_iou = binary_jaccard_index(pred_masks, true_masks)
                 # print("Overall batch IoU: ", batch_iou)
                 # print("Mean of Test IoU: ", torch.mean(test_iou))
                 # print(batch_iou, mean_batch_iou / len(pred_masks), mean_batch_iou)
 
-                # iou += (mean_batch_iou / len(pred_masks))
-                iou += batch_iou
+                iou += (mean_batch_iou / len(pred_masks))
+                # iou += mean_batch_iou
                 seg_loss += seg_loss_batch
                 mask_loss += mask_loss_batch
                 tot += seg_loss_batch + mask_loss_batch
