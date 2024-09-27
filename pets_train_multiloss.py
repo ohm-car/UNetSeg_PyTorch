@@ -14,7 +14,7 @@ import torchsummary
 import datetime
 
 from eval_multiloss import eval_net
-from unet.unet_model_xB import UNet
+from architectures.pets.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss import PascalVOCDataset

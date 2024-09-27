@@ -14,7 +14,7 @@ import torchsummary
 import datetime
 
 from pets_eval_seg import eval_net
-from unet.unet_model_seg import UNet
+from architectures.pets.unet_model_seg import UNet
 # from unet.voc_unet_model_seg import UNet
 
 from torch.utils.tensorboard import SummaryWriter
