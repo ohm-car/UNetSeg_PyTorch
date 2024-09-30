@@ -274,6 +274,9 @@ if __name__ == '__main__':
     logging.info(f'Using device {device}')
     logging.info(f'CPU workers available: {cpu_count()}')
 
+
+    # Set numpy manual seed as well
+
     torch.manual_seed(args.manual_seed)
     logging.info(f'Set seed for reproducability: {args.manual_seed}')
 
