@@ -106,6 +106,15 @@ class BUSIDataset(Dataset):
 
         return imgT
 
+    def gen_partial_mask(self, mask, sq_to_center = 2):
+
+        partial_mask = mask
+
+        pixels = list()
+        
+
+        return partial_mask
+
 
     # @classmethod
     # def preprocess(cls, pil_img, scale, isImage):
