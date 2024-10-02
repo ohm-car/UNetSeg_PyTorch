@@ -14,7 +14,7 @@ import torchsummary
 import datetime
 
 from busi_eval_multiloss import eval_net
-from unet import UNet
+from architectures.busi.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 from utils.BUSI_multiloss import BUSIDataset
@@ -39,7 +39,7 @@ dir_checkpoint = None
 def create_model():
 
     # model = fcn_resnet50(aux_loss=True)
-    model = deeplabv3_resnet50(num_classes = 2, aux_loss=True)
+    model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
                  nn.ReLU(inplace=True),
@@ -252,7 +252,7 @@ def get_args():
                         help='Whether to use the differentiable sampler to sample masks from probability values', dest='sp')
     parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=21,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
-    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path(__file__).resolve().parent.parent/'Datasets',
+    parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path(__file__).resolve().parent.parent,
                         help='Root Directory for dataset', dest='rd')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
