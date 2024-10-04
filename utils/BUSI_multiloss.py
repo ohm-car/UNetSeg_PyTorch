@@ -112,21 +112,6 @@ class BUSIDataset(Dataset):
     def gen_partial_mask(self, mask, sq_to_center = 4):
 
 
-        mask = np.squeeze(np.asarray(mask))
-
-        assert len(mask.shape) == 2, \
-            f'Check np mask shape {mask.shape}'
-
-        blobs = blob_doh(mask, max_sigma=30, threshold=0.01)
-
-        blob = blobs[0]
-
-        x, y = int(blob[0]), int(blob[1])
-
-        partial_mask = np.zeros(self.im_res)
-
-        r = sq_to_center
-        partial_mask[(x-r+1):(x+r),(y-r+1):(y+r)] = 1
         partial_mask = np.expand_dims(partial_mask, axis=0)
         return torch.tensor(partial_mask)
 
