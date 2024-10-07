@@ -14,7 +14,7 @@ import torchvision.transforms as transforms
 import csv
 import numpy as np
 from skimage.feature import blob_dog, blob_log, blob_doh
-from skimage.morphology import square
+from skimage.morphology import square, erosion, binary_erosion
 from skimage.color import rgb2gray
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
