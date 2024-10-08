@@ -16,11 +16,12 @@ import numpy as np
 from skimage.feature import blob_dog, blob_log, blob_doh
 from skimage.morphology import square, erosion, binary_erosion
 from skimage.color import rgb2gray
+from skimage.io import imread
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class BUSIDataset(Dataset):
-    def __init__(self, root_dir, im_res = 224, scale=1, mask_suffix=''):
+    def __init__(self, root_dir, im_res = 224, scale=1, mask_suffix='', preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/Dataset_BUSI_with_GT/')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
@@ -33,6 +34,11 @@ class BUSIDataset(Dataset):
         self.scale = scale
         self.mask_suffix = mask_suffix
 
+        self.preload = preload
+
+        if self.preload:
+            self.images, self.masks, self.eroded_masks, self.percs = self.load_data(self.file_list)
+
         self.transform = transforms.Compose([transforms.PILToTensor()])
         # self.percsDict = self.getPercsDict(percs_dir)
 
@@ -41,6 +47,46 @@ class BUSIDataset(Dataset):
         # self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
         #             if not file.startswith('.')]
         logging.info(f'Creating dataset with {len(self.file_list)} examples')
+
+    def load_data(self):
+
+        for filename in self.file_list:
+            img = load_image(filename)
+            mask = load_image_masks(filename)
+            eroded_mask = eroded_image_masks(filename)
+
+        return None
+
+    def load_image(self, filename):
+
+        img_file = glob(self.main_dir + filename + '.*')
+        assert len(img_file) == 1, \
+            f'Either no image or multiple images found for the ID {i}: {img_file}'
+        T = Image.open(img_file[0])
+        if T.mode != 'RGB':
+            T = T.convert(mode = 'RGB')
+        T = self.preprocess(T, self.transform)
+        return T
+
+    def load_image_masks(self, filename):
+
+        mask_file = glob(self.main_dir + filename + '_mask' + '*')
+        og_masks = list()
+        mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
+        for mf in mask_file:
+            #Mask as torch Tensor
+            M = Image.open(mf)
+            M = self.preprocess_mask(M, self.transform)
+            mask += M
+            
+        return mask
+        # return masks
+
+    def eroded_image_masks(self, filename):
+
+        return eroded_image_masks
+
+
 
     def __len__(self):
         return len(self.file_list)
