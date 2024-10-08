@@ -22,7 +22,7 @@ from skimage.transform import resize
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class BUSIDataset(Dataset):
-    def __init__(self, root_dir, threshold = 50, im_res = 224, scale=1, mask_suffix='', preload = True):
+    def __init__(self, root_dir, threshold = 50, im_res = 224, scale=1, mask_suffix='', preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/Dataset_BUSI_with_GT/')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
@@ -91,7 +91,7 @@ class BUSIDataset(Dataset):
                 M = M.convert(mode = '1')
             M = self.preprocess_mask(M, self.transform)
             mask += M
-            
+        mask = torch.clamp(mask, max = 1.0)            
         return mask
         # return masks
 
