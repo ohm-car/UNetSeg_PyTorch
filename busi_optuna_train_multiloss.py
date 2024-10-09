@@ -48,7 +48,7 @@ def get_dataloaders(args,
 
     root_dir = args.rd
 
-    dataset = BUSIDataset(root_dir, im_res = args.im_res, threshold = args.threshold)
+    dataset = BUSIDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -320,6 +320,8 @@ def get_args():
                         help='Input Image resolution')
     parser.add_argument('-th', '--threshold', dest='threshold', type=int, default=100,
                         help='Weak Mask Pixel Threshold')
+    parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
+                        help='Whether to pre-load images. Typically saves time reading and writing from disk.')
 
     return parser.parse_args()
 
