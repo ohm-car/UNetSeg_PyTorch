@@ -216,7 +216,8 @@ def objective(trial,
                 perc_loss = mask_criterion(pred_mask, imgs_percs)
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss
-                total_loss = loss + perc_loss + weak_loss
+                # total_loss = loss + perc_loss + weak_loss
+                total_loss = loss + weak_loss
                 # epoch_loss += loss.item() + perc_loss.item()
                 epoch_loss += loss.item() + perc_loss.item() + weak_loss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
