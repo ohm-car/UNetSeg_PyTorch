@@ -26,7 +26,7 @@ source activate unet
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_train_multiloss.py -e=200 -b=72 -ir=224
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/pets_train_seg.py -b=64 -e=60 -ir=224
 # python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_train_segA.py -b=36 -e=100 -ir=224
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=36 -ir=224 -th=200
+python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=36 -ir=224 -th=320
 
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/voc/output_$DT.err
