@@ -345,7 +345,9 @@ if __name__ == '__main__':
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
-                                                save_freq = args.saveFreq), n_trials = 60)
+                                                save_freq = args.saveFreq), 
+                                                n_trials = 60,
+                                                n_jobs = 2)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
