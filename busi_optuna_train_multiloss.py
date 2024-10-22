@@ -323,6 +323,8 @@ def get_args():
                         help='Weak Mask Pixel Threshold')
     parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')
+    parser.add_argument('-d', '--device', metavar='D', type=str, default=None,
+                        help='pytorch device', dest='device')
 
     return parser.parse_args()
 
