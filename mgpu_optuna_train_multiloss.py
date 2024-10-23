@@ -72,6 +72,7 @@ def get_model():
         )
         logging.info(f'Model loaded from {args.load}')
 
+    print(device)
     net.to(device=device)
     return net
 
