@@ -72,7 +72,7 @@ def get_model():
         )
         logging.info(f'Model loaded from {args.load}')
 
-    print(device)
+    print("Net Device: ", device)
     net.to(device=device)
     return net
 
@@ -351,7 +351,7 @@ if __name__ == '__main__':
         train_loaders.append(tl)
         val_loaders.append(vl)
 
-
+    print("Length of Loaders: ", len(train_loaders), len(val_loaders))
     print("Available GPUs: ", torch.cuda.device_count())
 
     study = optuna.create_study(direction='maximize')
