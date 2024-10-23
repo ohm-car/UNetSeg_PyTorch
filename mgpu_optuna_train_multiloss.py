@@ -58,7 +58,7 @@ def get_dataloaders(args,
 
     return train_loader, val_loader
 
-def get_model():
+def get_model(device = torch.device('cuda')):
 
     net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
     logging.info(f'Network:\n'
@@ -117,7 +117,7 @@ def objective(trial,
     train_loader = train_loaders[device_id]
     val_loader = val_loaders[device_id]
 
-    net = get_model()
+    net = get_model(device)
 
     # dataset = PetsReconDataset(dir_img, dir_mask, img_scale)
     # n_val = int(len(dataset) * val_percent)
