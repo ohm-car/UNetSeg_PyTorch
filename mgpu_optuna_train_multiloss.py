@@ -89,7 +89,8 @@ def objective(trial,
               img_scale=0.5,
               save_freq=None,
               regularizer=None,
-              regularizer_weight=0.1):
+              regularizer_weight=0.1,
+              n_gpus=1):
 
     # root_dir = args.rd
     print(root_dir, type(root_dir))
@@ -104,6 +105,9 @@ def objective(trial,
         logging.info('Created checkpoint directory')
     except OSError:
         sys.exit(99)
+
+    device_id = trial.number % n_gpus
+    print(device)
 
     net = get_model()
 
@@ -345,9 +349,10 @@ if __name__ == '__main__':
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
-                                                save_freq = args.saveFreq), 
+                                                save_freq = args.saveFreq,
+                                                n_gpus = torch.cuda.device_count()), 
                                                 n_trials = 60,
-                                                n_jobs = 2)
+                                                n_jobs = torch.cuda.device_count())
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
