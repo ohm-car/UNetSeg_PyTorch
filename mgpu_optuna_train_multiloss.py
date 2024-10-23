@@ -80,10 +80,10 @@ def get_model(device = torch.device('cuda')):
 def objective(trial,
               args,
               device,
-              train_loader,
-              val_loader,
-              # train_loaders,
-              # val_loaders,
+              # train_loader,
+              # val_loader,
+              train_loaders,
+              val_loaders,
               net=None,
               epochs=5,
               batch_size=1,
@@ -115,8 +115,8 @@ def objective(trial,
     print("Torch Device: ", device)
     device = torch.device(str(device) + ':' + str(device_id))
 
-    # train_loader = train_loaders[device_id]
-    # val_loader = val_loaders[device_id]
+    train_loader = train_loaders[device_id]
+    val_loader = val_loaders[device_id]
 
     net = get_model(device)
 
@@ -347,10 +347,10 @@ if __name__ == '__main__':
     # train_loaders = list()
     # val_loaders = list()
 
-    # for i in range(torch.cuda.device_count()):
-    #     tl, vl = get_dataloaders(args)
-    #     train_loaders.append(tl)
-    #     val_loaders.append(vl)
+    for i in range(torch.cuda.device_count()):
+        tl, vl = get_dataloaders(args)
+        train_loaders.append(tl)
+        val_loaders.append(vl)
 
     # print("Length of Loaders: ", len(train_loaders), len(val_loaders))
     print("Available GPUs: ", torch.cuda.device_count())
@@ -365,10 +365,10 @@ if __name__ == '__main__':
                                                 epochs=args.epochs,
                                                 batch_size=args.batchsize,
                                                 device=device,
-                                                train_loader = train_loader,
-                                                val_loader = val_loader,
-                                                # train_loaders=train_loaders,
-                                                # val_loaders=val_loaders,
+                                                # train_loader = train_loader,
+                                                # val_loader = val_loader,
+                                                train_loaders=train_loaders,
+                                                val_loaders=val_loaders,
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
