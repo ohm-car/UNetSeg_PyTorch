@@ -352,7 +352,7 @@ if __name__ == '__main__':
     #     train_loaders.append(tl)
     #     val_loaders.append(vl)
 
-    print("Length of Loaders: ", len(train_loaders), len(val_loaders))
+    # print("Length of Loaders: ", len(train_loaders), len(val_loaders))
     print("Available GPUs: ", torch.cuda.device_count())
 
     study = optuna.create_study(direction='maximize')
