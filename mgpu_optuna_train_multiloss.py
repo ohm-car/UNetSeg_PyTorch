@@ -13,6 +13,7 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 import optuna
+import time
 
 from eval_multiloss import eval_net
 from architectures.pets.unet_model_xB import UNet
@@ -341,7 +342,7 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    train_loader, val_loader = get_dataloaders(args)
+    # train_loader, val_loader = get_dataloaders(args)
 
     train_loaders = list()
     val_loaders = list()
@@ -355,6 +356,7 @@ if __name__ == '__main__':
     print("Available GPUs: ", torch.cuda.device_count())
 
     study = optuna.create_study(direction='maximize')
+    start = time.time()
 
     try:
         study.optimize(lambda trial : objective(trial,
@@ -372,7 +374,7 @@ if __name__ == '__main__':
                                                 save_cp = args.savecp,
                                                 save_freq = args.saveFreq,
                                                 n_gpus = torch.cuda.device_count()), 
-                                                n_trials = 60,
+                                                n_trials = 20,
                                                 n_jobs = torch.cuda.device_count())
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
@@ -381,3 +383,5 @@ if __name__ == '__main__':
             sys.exit(0)
         except SystemExit:
             os._exit(0)
+    end = time.time()
+    print("Running Time: ", end - start, " seconds")
