@@ -344,6 +344,8 @@ if __name__ == '__main__':
         else:
             device = torch.device('cpu')
 
+    print(device)
+
     logging.info(f'Using device {device}')
     logging.info(f'CPU workers available: {cpu_count()}')
 
