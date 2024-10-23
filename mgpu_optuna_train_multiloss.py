@@ -107,7 +107,8 @@ def objective(trial,
         sys.exit(99)
 
     device_id = trial.number % n_gpus
-    print(device)
+    print("Device ID: ", device_id)
+    print("Torch Device: ", device)
 
     net = get_model()
 
@@ -334,6 +335,7 @@ if __name__ == '__main__':
     # cudnn.benchmark = True
 
     train_loader, val_loader = get_dataloaders(args)
+    print("Available GPUs: ", torch.cuda.device_count())
 
     study = optuna.create_study(direction='maximize')
 
