@@ -344,8 +344,8 @@ if __name__ == '__main__':
 
     train_loader, val_loader = get_dataloaders(args)
 
-    # train_loaders = list()
-    # val_loaders = list()
+    train_loaders = list()
+    val_loaders = list()
 
     for i in range(torch.cuda.device_count()):
         tl, vl = get_dataloaders(args)
