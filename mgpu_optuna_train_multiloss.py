@@ -93,7 +93,7 @@ def objective(trial,
               n_gpus=1):
 
     # root_dir = args.rd
-    print(root_dir, type(root_dir))
+    # print(root_dir, type(root_dir))
     # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
     # print(dir_img, type(dir_img))
     # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
@@ -109,6 +109,7 @@ def objective(trial,
     device_id = trial.number % n_gpus
     print("Device ID: ", device_id)
     print("Torch Device: ", device)
+    device = torch.device(str(device) + ':' + str(device_id))
 
     net = get_model()
 
