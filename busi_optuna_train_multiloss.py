@@ -162,7 +162,7 @@ def objective(trial,
     recon_criterion = nn.L1Loss()
 
     # Loss criterion for weak mask
-    weak_mask_criterion = nn.BCELoss(reduction = 'mean')
+    weak_mask_criterion = nn.BCELoss(reduction = 'sum')
     # weak_mask_criterion = nn.BCEWithLogitsLoss()
     
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
