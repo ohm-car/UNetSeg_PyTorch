@@ -7,8 +7,8 @@
 #SBATCH --gres=gpu:8
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_2080
-#SBATCH --output=output_%j.log
-#SBATCH --error=output_%j.err
+#SBATCH --output=output_%A_%a.log
+#SBATCH --error=output_%A_%a.err
 
 DT=`date +"%m-%d_%H-%M"`
 
