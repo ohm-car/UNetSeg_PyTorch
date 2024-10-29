@@ -25,9 +25,9 @@ th=$(echo "0.04 * $SLURM_ARRAY_TASK_ID" | bc)
 
 echo "The threshold is: $th"
 
-if [ $ -eq 6]; then
+if [ $SLURM_ARRAY_TASK_ID -eq 6]; then
 	th=50
-elif [[ $ -eq 7 ]]; then
+elif [[ $SLURM_ARRAY_TASK_ID -eq 7 ]]; then
 	th=-1
 fi
 
