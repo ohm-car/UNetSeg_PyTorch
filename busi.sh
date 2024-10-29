@@ -4,7 +4,7 @@
 #SBATCH --array=0-7
 #SBATCH --mail-user=omkark1@umbc.edu
 #SBATCH --mem=32G
-#SBATCH --gres=gpu:8
+#SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_2080
 #SBATCH --output=output_%A_%a.log
