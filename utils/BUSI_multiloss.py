@@ -117,7 +117,7 @@ class BUSIDataset(Dataset):
         e_mask = mask
         pixels = np.sum(e_mask)
         if self.threshold < 1.0:
-            threshold = int(pixels * self.threshold)
+            threshold = max(30, int(pixels * self.threshold))
         else:
             threshold = self.threshold
         # print(threshold, pixels)
