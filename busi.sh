@@ -29,6 +29,8 @@ if [[ $SLURM_ARRAY_TASK_ID -eq 6 ]]; then
 	th=50
 elif [[ $SLURM_ARRAY_TASK_ID -eq 7 ]]; then
 	th=-1
+else
+	echo "Nothin"
 fi
 
 echo "The threshold is: $th"
