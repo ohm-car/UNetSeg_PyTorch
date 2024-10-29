@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=busi_mlrseg
-#SBATCH --array=0-7
+#SBATCH --array=0-11
 #SBATCH --mail-user=omkark1@umbc.edu
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
