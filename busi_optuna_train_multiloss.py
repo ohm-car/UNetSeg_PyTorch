@@ -319,7 +319,7 @@ def get_args():
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
-    parser.add_argument('-th', '--threshold', dest='threshold', type=int, default=100,
+    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=100.0,
                         help='Weak Mask Pixel Threshold')
     parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')
