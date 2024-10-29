@@ -116,8 +116,12 @@ class BUSIDataset(Dataset):
         # o_pixels = np.sum(mask)
         e_mask = mask
         pixels = np.sum(e_mask)
+        if self.threshold < 1.0:
+            threshold = int(pixels * self.threshold)
+        else:
+            threshold = self.threshold
         # print(threshold, pixels)
-        while pixels >= self.threshold:
+        while pixels >= threshold:
             e_mask_t = erosion(e_mask, np.ones((3,3)))
             pixels = np.sum(e_mask_t)
             

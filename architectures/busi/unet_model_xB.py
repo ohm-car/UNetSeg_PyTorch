@@ -44,4 +44,4 @@ class UNet(nn.Module):
         x = self.ext2(x)
         x = self.ext3(x)
         mask_logits = self.outM(x)
-        return im_recon, mask_logits
+        return {'aux' : im_recon, 'out' : mask_logits}
