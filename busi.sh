@@ -25,6 +25,13 @@ th=$(echo "0.04 * $SLURM_ARRAY_TASK_ID" | bc)
 
 echo "The threshold is: $th"
 
+if [ $ -eq 6]; then
+	th=50
+elif [[ $ -eq 7 ]]; then
+	th=-1
+fi
+
+echo "The threshold is: $th"
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
