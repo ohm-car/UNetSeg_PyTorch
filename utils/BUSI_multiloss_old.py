@@ -13,6 +13,10 @@ from torch.nn.functional import one_hot
 import torchvision.transforms as transforms
 import csv
 import numpy as np
+from skimage.feature import blob_dog, blob_log, blob_doh
+from skimage.morphology import square
+from skimage.color import rgb2gray
+
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
@@ -105,6 +109,12 @@ class BUSIDataset(Dataset):
         imgT = imgT / 255
 
         return imgT
+
+    def gen_partial_mask(self, mask, sq_to_center = 4):
+
+
+        partial_mask = np.expand_dims(partial_mask, axis=0)
+        return torch.tensor(partial_mask)
 
 
     # @classmethod
@@ -200,12 +210,20 @@ class BUSIDataset(Dataset):
         # Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
         # Mp = torch.permute(torch.squeeze(M), (2, 0, 1))
         # Mp = torch.squeeze(M)
-        Mp = M
+
+        Mc = self.gen_partial_mask(M)
+
+        assert Mc.size() == M.size(), \
+            f'Shapes mismatch {Mc.size()} != {M.size()}'
 
         return {
             'image_ID': idx,
             'image': T,
             'reconstructed_image': T,
+
             'mask': Mp,
+            'mask': M,
+            'comp_mask': Mc,
+
             'mask_perc': P
         }
