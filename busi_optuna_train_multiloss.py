@@ -113,7 +113,10 @@ def objective(trial,
     # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     # print(dir_mask, type(dir_mask))
     # tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/optuna/busi/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
+    if args.jobID:
+        dir_checkpoint = 'checkpoints/final_runs/busi/{}'.format(args.jobID)
+    else:
+        dir_checkpoint = 'checkpoints/optuna/busi/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
     try:
         os.makedirs(dir_checkpoint, exist_ok=True)
         logging.info('Created checkpoint directory')
@@ -325,6 +328,8 @@ def get_args():
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')
     parser.add_argument('-d', '--device', metavar='D', type=str, default=None,
                         help='pytorch device', dest='device')
+    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default=None,
+                        help='SLURM job id', dest='jobID')
 
     return parser.parse_args()
 
