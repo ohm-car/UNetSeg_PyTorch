@@ -114,7 +114,7 @@ def objective(trial,
     # print(dir_mask, type(dir_mask))
     # tm = datetime.datetime.now()
     if args.jobID:
-        dir_checkpoint = 'checkpoints/final_runs/busi/{}'.format(args.jobID)
+        dir_checkpoint = 'checkpoints/final_runs/busi/{}/'.format(args.jobID)
     else:
         dir_checkpoint = 'checkpoints/optuna/busi/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
     try:
@@ -271,7 +271,7 @@ def objective(trial,
         if save_cp:
             torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_Trial{trial.number}_Epoch{epoch + 1}.pth')
-            save_iou_thresh = val_score[3] * 1.1
+            save_iou_thresh = val_score[3] * 1.035
             logging.info(f'Checkpoint Saved!')
 
         # if save_cp:
