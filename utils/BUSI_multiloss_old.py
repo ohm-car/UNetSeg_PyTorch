@@ -17,7 +17,6 @@ from skimage.feature import blob_dog, blob_log, blob_doh
 from skimage.morphology import square
 from skimage.color import rgb2gray
 
-
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class BUSIDataset(Dataset):
@@ -210,7 +209,6 @@ class BUSIDataset(Dataset):
         # Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
         # Mp = torch.permute(torch.squeeze(M), (2, 0, 1))
         # Mp = torch.squeeze(M)
-
         Mc = self.gen_partial_mask(M)
 
         assert Mc.size() == M.size(), \
@@ -220,10 +218,7 @@ class BUSIDataset(Dataset):
             'image_ID': idx,
             'image': T,
             'reconstructed_image': T,
-
-            'mask': Mp,
             'mask': M,
             'comp_mask': Mc,
-
             'mask_perc': P
         }
