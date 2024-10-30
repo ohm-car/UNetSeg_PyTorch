@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch import optim
 from tqdm import tqdm
 import torchsummary
@@ -47,7 +48,7 @@ def get_dataloaders(args,
 
     root_dir = args.rd
 
-    dataset = BUSIDataset(root_dir, im_res = args.im_res)
+    dataset = BUSIDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -112,7 +113,10 @@ def objective(trial,
     # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     # print(dir_mask, type(dir_mask))
     # tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/optuna/busi/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
+    if args.jobID:
+        dir_checkpoint = 'checkpoints/final_runs/busi/{}/'.format(args.jobID)
+    else:
+        dir_checkpoint = 'checkpoints/optuna/busi/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
     try:
         os.makedirs(dir_checkpoint, exist_ok=True)
         logging.info('Created checkpoint directory')
@@ -159,6 +163,10 @@ def objective(trial,
     # optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     recon_criterion = nn.L1Loss()
+
+    # Loss criterion for weak mask
+    weak_mask_criterion = nn.BCELoss(reduction = 'sum')
+    # weak_mask_criterion = nn.BCEWithLogitsLoss()
     
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
@@ -178,6 +186,7 @@ def objective(trial,
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
+                weak_mask = batch['comp_mask']
                 # assert imgs.shape[1] == net.n_channels, \
                 #     f'Network has been defined with {net.n_channels} input channels, ' \
                 #     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
@@ -187,6 +196,7 @@ def objective(trial,
                 # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
+                weak_mask = weak_mask.to(device=device, dtype=torch.float32)
 
                 # pred_recon_img, pred_mask = net(imgs)
                 outs = net(imgs)
@@ -197,15 +207,25 @@ def objective(trial,
                 # mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
                 # mask_criterion = nn.L1Loss()
 
+                # BCEWithLogitsLoss for partial masks
+
+                weak_pred_mask = pred_mask * weak_mask
+                weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask)
+
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
+                # pred_mask_sigmoid = F.sigmoid(pred_mask)
                 perc_loss = mask_criterion(pred_mask, imgs_percs)
-                total_loss = loss + perc_loss
-                epoch_loss += loss.item() + perc_loss.item()
+                # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
+                # total_loss = loss + perc_loss
+                total_loss = loss + perc_loss + weak_loss
+                # total_loss = loss + weak_loss
+                # epoch_loss += loss.item() + perc_loss.item()
+                epoch_loss += loss.item() + perc_loss.item() + weak_loss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
 
-                pbar.set_postfix(**{'percLoss (batch)': perc_loss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
+                pbar.set_postfix(**{'percLoss (batch)': perc_loss.item(), 'reconstruction loss': loss.item(), 'weak loss': weak_loss.item(), 'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
                 total_loss.backward()
@@ -251,7 +271,7 @@ def objective(trial,
         if save_cp:
             torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_Trial{trial.number}_Epoch{epoch + 1}.pth')
-            save_iou_thresh = val_score[3] * 1.1
+            save_iou_thresh = val_score[3] * 1.035
             logging.info(f'Checkpoint Saved!')
 
         # if save_cp:
@@ -302,6 +322,14 @@ def get_args():
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
+    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=100.0,
+                        help='Weak Mask Pixel Threshold')
+    parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
+                        help='Whether to pre-load images. Typically saves time reading and writing from disk.')
+    parser.add_argument('-d', '--device', metavar='D', type=str, default=None,
+                        help='pytorch device', dest='device')
+    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default=None,
+                        help='SLURM job id', dest='jobID')
 
     return parser.parse_args()
 
@@ -309,13 +337,19 @@ def get_args():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     args = get_args()
+    print(args)
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    if torch.cuda.is_available():
-        device = torch.device('cuda')
-    elif torch.backends.mps.is_available():
-        device = torch.device('mps')
+    if args.device:
+        device = torch.device(args.device)
     else:
-        device = torch.device('cpu')
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        elif torch.backends.mps.is_available():
+            device = torch.device('mps')
+        else:
+            device = torch.device('cpu')
+
+    print(device)
 
     logging.info(f'Using device {device}')
     logging.info(f'CPU workers available: {cpu_count()}')

@@ -13,6 +13,7 @@ from tqdm import tqdm
 import torchsummary
 import datetime
 import optuna
+import time
 
 from eval_multiloss import eval_net
 from architectures.pets.unet_model_xB import UNet
@@ -332,6 +333,7 @@ if __name__ == '__main__':
     train_loader, val_loader = get_dataloaders(args)
 
     study = optuna.create_study(direction='maximize')
+    start = time.time()
 
     try:
         study.optimize(lambda trial : objective(trial,
@@ -345,7 +347,7 @@ if __name__ == '__main__':
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
-                                                save_freq = args.saveFreq), n_trials = 60)
+                                                save_freq = args.saveFreq), n_trials = 20)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
@@ -353,3 +355,5 @@ if __name__ == '__main__':
             sys.exit(0)
         except SystemExit:
             os._exit(0)
+    end = time.time()
+    print("Running Time: ", end - start, " seconds")
