@@ -244,7 +244,7 @@ def objective(trial,
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
-                        if value is not None:
+                        if value.grad is not None:
                             writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                             writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
                     val_score = eval_net(net, val_loader, device, regularizer, epoch)
