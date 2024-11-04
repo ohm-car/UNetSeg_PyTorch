@@ -171,7 +171,7 @@ def objective(trial,
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
 
-    save_iou_thresh = 0.2
+    save_iou_thresh = 0.4
 
     for epoch in range(epochs):
         net.train()
@@ -210,13 +210,13 @@ def objective(trial,
                 # BCEWithLogitsLoss for partial masks
 
                 weak_pred_mask = pred_mask * weak_mask
-                weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask)
+                weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask) if args.threshold !=0 else torch.tensor(0)
 
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
                 # pred_mask_sigmoid = F.sigmoid(pred_mask)
-                perc_loss = mask_criterion(pred_mask, imgs_percs)
+                perc_loss = mask_criterion(pred_mask, imgs_percs) if args.jobID[-1] !='7' else torch.tensor(0)
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss
                 total_loss = loss + perc_loss + weak_loss
@@ -328,7 +328,7 @@ def get_args():
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')
     parser.add_argument('-d', '--device', metavar='D', type=str, default=None,
                         help='pytorch device', dest='device')
-    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default=None,
+    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default='0',
                         help='SLURM job id', dest='jobID')
 
     return parser.parse_args()
