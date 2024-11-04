@@ -350,6 +350,7 @@ if __name__ == '__main__':
             device = torch.device('cpu')
 
     print(device)
+    print("Job_ID:", args.jobID, type(args.jobID), args.jobID[-1])
 
     logging.info(f'Using device {device}')
     logging.info(f'CPU workers available: {cpu_count()}')
