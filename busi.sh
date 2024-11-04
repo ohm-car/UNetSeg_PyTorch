@@ -5,6 +5,7 @@
 #SBATCH --mail-user=omkark1@umbc.edu
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
+#SBATCH --nodelist=g04
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_2080
 #SBATCH --output=outfiles/final/busi/output_%A_%a.log
