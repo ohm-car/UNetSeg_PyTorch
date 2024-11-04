@@ -19,7 +19,7 @@ source activate unet
 # cp /nfs/ada/oates/users/omkark1/Thesis_Work/Datasets.zip /scratch/$SLURM_JOBID
 # unzip -q /scratch/$SLURM_JOBID/Datasets.zip -d /scratch/$SLURM_JOBID
 
-th=$(echo "0.04 * $SLURM_ARRAY_TASK_ID" | bc)
+# th=$(echo "0.04 * $SLURM_ARRAY_TASK_ID" | bc)
 
 # echo "The threshold is: $th"
 
@@ -31,10 +31,13 @@ th=$(echo "0.04 * $SLURM_ARRAY_TASK_ID" | bc)
 # 	echo "Nothin"
 # fi
 
-echo "The threshold is: $th"
+th=(0, 0.04, 0.08, 0.12, 0.16, 0.20, 50, -1)
+
+echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
 concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 echo "Concatenated ID: $concatenated_id"
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=36 -ir=224 -th=$th -j=$concatenated_id
+
+# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=36 -ir=224 -th=$th -j=$concatenated_id
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
