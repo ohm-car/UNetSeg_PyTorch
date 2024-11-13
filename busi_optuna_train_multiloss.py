@@ -222,8 +222,10 @@ def objective(trial,
                 # total_loss = loss + perc_loss
 
                 if args.mode == 'perc_loss_only':
+                    print('percLOSS')
                     total_loss = loss + perc_loss
                 elif args.mode == 'weak_mask_only':
+                    print('weakLOSS')
                     total_loss = loss + weak_loss
                 else:
                     total_loss = loss + perc_loss + weak_loss
