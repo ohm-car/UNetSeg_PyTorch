@@ -221,9 +221,9 @@ def objective(trial,
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss
 
-                if args.threshold == 0:
+                if args.mode == 'perc_loss_only':
                     total_loss = loss + perc_loss
-                elif args.jobID[-1] == '7':
+                elif args.mode == 'weak_mask_only':
                     total_loss = loss + weak_loss
                 else:
                     total_loss = loss + perc_loss + weak_loss
@@ -340,6 +340,8 @@ def get_args():
                         help='pytorch device', dest='device')
     parser.add_argument('-j', '--jobID', metavar='JD', type=str, default='0',
                         help='SLURM job id', dest='jobID')
+    parser.add_argument('-m', '--mode', metavar='M', type=str, default='default',
+                        help='Mode of training - default, or perc_loss_only, or weak_mask_only', dest='mode')
 
     return parser.parse_args()
 
@@ -392,27 +394,27 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    train_loader, val_loader = get_dataloaders(args)
+    # train_loader, val_loader = get_dataloaders(args)
 
-    study = optuna.create_study(direction='maximize')
+    # study = optuna.create_study(direction='maximize')
 
-    try:
-        study.optimize(lambda trial : objective(trial,
-                                                args=args,
-                                                # net=net,
-                                                epochs=args.epochs,
-                                                batch_size=args.batchsize,
-                                                device=device,
-                                                train_loader = train_loader,
-                                                val_loader = val_loader,
-                                                img_scale=args.scale,
-                                                val_percent=args.val / 100,
-                                                save_cp = args.savecp,
-                                                save_freq = args.saveFreq), n_trials = 60)
-    except KeyboardInterrupt:
-        torch.save(net.state_dict(), 'INTERRUPTED.pth')
-        logging.info('Saved interrupt')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+    # try:
+    #     study.optimize(lambda trial : objective(trial,
+    #                                             args=args,
+    #                                             # net=net,
+    #                                             epochs=args.epochs,
+    #                                             batch_size=args.batchsize,
+    #                                             device=device,
+    #                                             train_loader = train_loader,
+    #                                             val_loader = val_loader,
+    #                                             img_scale=args.scale,
+    #                                             val_percent=args.val / 100,
+    #                                             save_cp = args.savecp,
+    #                                             save_freq = args.saveFreq), n_trials = 60)
+    # except KeyboardInterrupt:
+    #     torch.save(net.state_dict(), 'INTERRUPTED.pth')
+    #     logging.info('Saved interrupt')
+    #     try:
+    #         sys.exit(0)
+    #     except SystemExit:
+    #         os._exit(0)
