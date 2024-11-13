@@ -142,7 +142,8 @@ def objective(trial,
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
     regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
-    writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
+    # writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
+    writer = SummaryWriter(comment=f'JobID_{args.jobID}_Trial_{trial.number}_SCALE_{img_scale}')
     global_step = 0
 
     logging.info(f'''Starting training:
@@ -210,16 +211,24 @@ def objective(trial,
                 # BCEWithLogitsLoss for partial masks
 
                 weak_pred_mask = pred_mask * weak_mask
-                weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask) if args.threshold !=0 else torch.tensor(0)
+                weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask)
 
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
                 # pred_mask_sigmoid = F.sigmoid(pred_mask)
-                perc_loss = mask_criterion(pred_mask, imgs_percs) if args.jobID[-1] !='7' else torch.tensor(0)
+                perc_loss = mask_criterion(pred_mask, imgs_percs)
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss
-                total_loss = loss + perc_loss + weak_loss
+
+                if args.threshold == 0:
+                    total_loss = loss + perc_loss
+                elif args.jobID[-1] == '7':
+                    total_loss = loss + weak_loss
+                else:
+                    total_loss = loss + perc_loss + weak_loss
+
+                # total_loss = loss + perc_loss + weak_loss
                 # total_loss = loss + weak_loss
                 # epoch_loss += loss.item() + perc_loss.item()
                 epoch_loss += loss.item() + perc_loss.item() + weak_loss.item()
@@ -323,7 +332,7 @@ def get_args():
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
-    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=100.0,
+    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=50.0,
                         help='Weak Mask Pixel Threshold')
     parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')
