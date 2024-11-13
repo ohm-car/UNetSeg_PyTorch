@@ -32,12 +32,14 @@ source activate unet
 # fi
 
 th=(0 0.04 0.08 0.12 0.16 0.2 50 50)
+md=('perc_loss_only' 'default' 'default' 'default' 'default' 'default' 'default' 'weak_mask_only')
 echo "The threshold is: ${th[1]}"
 echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
+echo "The mode is: ${md[$SLURM_ARRAY_TASK_ID]}"
 concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 echo "Concatenated ID: $concatenated_id"
 
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=32 -ir=224 -th=${th[$SLURM_ARRAY_TASK_ID]} -j=$concatenated_id
+# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=32 -ir=224 -th=${th[$SLURM_ARRAY_TASK_ID]} -j=$concatenated_id -m=${md[$SLURM_ARRAY_TASK_ID]}
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
