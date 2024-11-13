@@ -394,27 +394,27 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    # train_loader, val_loader = get_dataloaders(args)
+    train_loader, val_loader = get_dataloaders(args)
 
-    # study = optuna.create_study(direction='maximize')
+    study = optuna.create_study(direction='maximize')
 
-    # try:
-    #     study.optimize(lambda trial : objective(trial,
-    #                                             args=args,
-    #                                             # net=net,
-    #                                             epochs=args.epochs,
-    #                                             batch_size=args.batchsize,
-    #                                             device=device,
-    #                                             train_loader = train_loader,
-    #                                             val_loader = val_loader,
-    #                                             img_scale=args.scale,
-    #                                             val_percent=args.val / 100,
-    #                                             save_cp = args.savecp,
-    #                                             save_freq = args.saveFreq), n_trials = 60)
-    # except KeyboardInterrupt:
-    #     torch.save(net.state_dict(), 'INTERRUPTED.pth')
-    #     logging.info('Saved interrupt')
-    #     try:
-    #         sys.exit(0)
-    #     except SystemExit:
-    #         os._exit(0)
+    try:
+        study.optimize(lambda trial : objective(trial,
+                                                args=args,
+                                                # net=net,
+                                                epochs=args.epochs,
+                                                batch_size=args.batchsize,
+                                                device=device,
+                                                train_loader = train_loader,
+                                                val_loader = val_loader,
+                                                img_scale=args.scale,
+                                                val_percent=args.val / 100,
+                                                save_cp = args.savecp,
+                                                save_freq = args.saveFreq), n_trials = 60)
+    except KeyboardInterrupt:
+        torch.save(net.state_dict(), 'INTERRUPTED.pth')
+        logging.info('Saved interrupt')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
