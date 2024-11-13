@@ -58,37 +58,37 @@ def get_dataloaders(args,
 
     return train_loader, val_loader
 
-# def get_model():
-
-#     net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
-#     logging.info(f'Network:\n'
-#                  f'\t{net.n_channels} input channels\n'
-#                  f'\t{net.n_classes} output channels (classes)\n'
-#                  f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
-
-#     if args.load:
-#         net.load_state_dict(
-#             torch.load(args.load, map_location=device)
-#         )
-#         logging.info(f'Model loaded from {args.load}')
-
-#     net.to(device=device)
-#     return net
-
 def get_model():
 
-    # model = fcn_resnet50(aux_loss=True)
-    model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
-    aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
-                 nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-                 nn.ReLU(inplace=True),
-                 nn.Dropout(p=0.1, inplace=False),
-                 nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
-                 nn.Sigmoid())
-    model.aux_classifier = aux
-    model.classifier.append(nn.Sigmoid())
-    model.to(device=device)
-    return model
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+    logging.info(f'Network:\n'
+                 f'\t{net.n_channels} input channels\n'
+                 f'\t{net.n_classes} output channels (classes)\n'
+                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+
+    if args.load:
+        net.load_state_dict(
+            torch.load(args.load, map_location=device)
+        )
+        logging.info(f'Model loaded from {args.load}')
+
+    net.to(device=device)
+    return net
+
+# def get_model():
+
+#     # model = fcn_resnet50(aux_loss=True)
+#     model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
+#     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+#                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+#                  nn.ReLU(inplace=True),
+#                  nn.Dropout(p=0.1, inplace=False),
+#                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+#                  nn.Sigmoid())
+#     model.aux_classifier = aux
+#     model.classifier.append(nn.Sigmoid())
+#     model.to(device=device)
+#     return model
 
 def objective(trial,
               args,
