@@ -15,12 +15,12 @@ import csv
 """This dataset class preloads the entire dataset into the GPU memory (line 33, load_data() function). Not the best practice, but this is useful in
 conditions where fetching batches from the disk becomes the bottleneck rather than the training process itself."""
 
-class PetsReconDataset(Dataset):
-    def __init__(self, imgs_dir, masks_dir, percs_dir, im_res = 160, scale=1, mask_suffix=''):
-        self.imgs_dir = imgs_dir
-        self.masks_dir = masks_dir
+class PetsDataset(Dataset):
+    def __init__(self, root_dir, percs_dir, im_res = 160, scale=1, preload = False):
+        self.main_dir = os.path.join(root_dir, 'Datasets/petsData/')
+        self.imgs_dir = os.path.join(self.main_dir, 'images/')
+        self.masks_dir = os.path.join(self.main_dir, 'annotations/trimaps/')
         self.scale = scale
-        self.mask_suffix = mask_suffix
         self.percsDict = self.getPercsDict(percs_dir)
         self.im_res = (im_res, im_res)
         # print(self.percsDict)
@@ -30,11 +30,34 @@ class PetsReconDataset(Dataset):
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
                     if not file.startswith('.')][:400]
-        self.images, self.masks, self.percs = self.load_data(imgs_dir, masks_dir)
+
+        if preload:
+            self.images, self.masks, self.eroded_masks, self.percs = self.load_data(imgs_dir, masks_dir)
+            logging.info(f'Loaded dataset with {len(self.ids)} examples')
+
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
         return len(self.ids)
+
+    # EDIT THE BELOW load_data() FUNCTION TO THE USE CASE. THE NEXT FUNCTION IS TO BE DEPRECATED
+    # def load_data(self):
+
+    #     images, masks, eroded_masks, percs = list(), list(), list(), list()
+
+    #     for filename in self.file_list:
+    #         # print(filename)
+    #         img = self.load_image(filename)
+    #         mask = self.load_image_masks(filename)
+    #         eroded_mask = self.eroded_image_masks(filename) if self.threshold != 0 else mask
+    #         perc = self.get_perc(mask)
+
+    #         images.append(img)
+    #         masks.append(mask)
+    #         eroded_masks.append(eroded_mask)
+    #         percs.append(perc)
+
+    #     return images, masks, eroded_masks, percs
 
     def getPercsDict(self, percs_dir):
         
@@ -50,57 +73,6 @@ class PetsReconDataset(Dataset):
 
     def get_filenames(self):
         return self.ids
-
-
-    # @classmethod
-    # def preprocess(cls, pil_img, scale, isImage):
-    #     w, h = pil_img.size
-    #     newW, newH = int(scale * w), int(scale * h)
-    #     assert newW > 0 and newH > 0, 'Scale is too small'
-    #     pil_img = pil_img.resize((160, 160))
-
-    #     img_nd = np.array(pil_img)
-
-    #     if len(img_nd.shape) == 2:
-    #         img_nd -= 1
-    #         # img_nd = np.expand_dims(img_nd, axis=2)
-
-    #     # if not isImage:
-    #         # img_nd = cls.onehot_initialization(cls, img_nd)
-    #         # img_nd -= 1
-    #         # img_nd = (np.arange(img_nd.max()+1) == img_nd[...,None]).astype(int)
-    #         # print(img_nd.shape)
-
-    #     # HWC to CHW
-        
-    #     if isImage:
-    #         img_trans = img_nd.transpose((2, 0, 1))
-    #         if img_trans.max() > 1:
-    #             img_trans = img_trans / 255
-    #     else:
-    #         img_trans = img_nd
-
-    #     return img_trans
-
-    # def processMask(self, pilmask):
-
-    #     mask = np.asarray(pilmask)
-
-    #     mask = np.sum(mask, axis = 2)
-    #     mask = mask == 765
-
-    #     return Image.fromarray(np.uint8(mask))
-
-    # def all_idx(self, idx, axis):
-    #     grid = np.ogrid[tuple(map(slice, idx.shape))]
-    #     grid.insert(axis, idx)
-    #     return tuple(grid)
-
-    # def onehot_initialization(self, a):
-    #     ncols = a.max()+1
-    #     out = np.zeros(a.shape + (ncols,), dtype=int)
-    #     out[self.all_idx(a, axis=2)] = 1
-    #     return out
 
     
     def preprocess(self, pil_img, transform):
