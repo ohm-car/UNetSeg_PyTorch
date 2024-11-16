@@ -58,37 +58,37 @@ def get_dataloaders(args,
 
     return train_loader, val_loader
 
-# def get_model():
-
-#     net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
-#     logging.info(f'Network:\n'
-#                  f'\t{net.n_channels} input channels\n'
-#                  f'\t{net.n_classes} output channels (classes)\n'
-#                  f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
-
-#     if args.load:
-#         net.load_state_dict(
-#             torch.load(args.load, map_location=device)
-#         )
-#         logging.info(f'Model loaded from {args.load}')
-
-#     net.to(device=device)
-#     return net
-
 def get_model():
 
-    # model = fcn_resnet50(aux_loss=True)
-    model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
-    aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
-                 nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-                 nn.ReLU(inplace=True),
-                 nn.Dropout(p=0.1, inplace=False),
-                 nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
-                 nn.Sigmoid())
-    model.aux_classifier = aux
-    model.classifier.append(nn.Sigmoid())
-    model.to(device=device)
-    return model
+    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+    logging.info(f'Network:\n'
+                 f'\t{net.n_channels} input channels\n'
+                 f'\t{net.n_classes} output channels (classes)\n'
+                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+
+    if args.load:
+        net.load_state_dict(
+            torch.load(args.load, map_location=device)
+        )
+        logging.info(f'Model loaded from {args.load}')
+
+    net.to(device=device)
+    return net
+
+# def get_model():
+
+#     # model = fcn_resnet50(aux_loss=True)
+#     model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
+#     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+#                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+#                  nn.ReLU(inplace=True),
+#                  nn.Dropout(p=0.1, inplace=False),
+#                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+#                  nn.Sigmoid())
+#     model.aux_classifier = aux
+#     model.classifier.append(nn.Sigmoid())
+#     model.to(device=device)
+#     return model
 
 def objective(trial,
               args,
@@ -142,7 +142,8 @@ def objective(trial,
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
     regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
-    writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
+    # writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
+    writer = SummaryWriter(comment=f'JobID_{args.jobID}_Trial_{trial.number}_SCALE_{img_scale}')
     global_step = 0
 
     logging.info(f'''Starting training:
@@ -171,7 +172,7 @@ def objective(trial,
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
 
-    save_iou_thresh = 0.2
+    save_iou_thresh = 0.4
 
     for epoch in range(epochs):
         net.train()
@@ -219,7 +220,15 @@ def objective(trial,
                 perc_loss = mask_criterion(pred_mask, imgs_percs)
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss
-                total_loss = loss + perc_loss + weak_loss
+
+                if args.mode == 'perc_loss_only':
+                    total_loss = loss + perc_loss
+                elif args.mode == 'weak_mask_only':
+                    total_loss = loss + weak_loss
+                else:
+                    total_loss = loss + perc_loss + weak_loss
+
+                # total_loss = loss + perc_loss + weak_loss
                 # total_loss = loss + weak_loss
                 # epoch_loss += loss.item() + perc_loss.item()
                 epoch_loss += loss.item() + perc_loss.item() + weak_loss.item()
@@ -244,8 +253,9 @@ def objective(trial,
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
-                        writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
-                        writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
+                        if value.grad is not None:
+                            writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
+                            writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
                     val_score = eval_net(net, val_loader, device, regularizer, epoch)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
@@ -322,14 +332,16 @@ def get_args():
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
-    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=100.0,
+    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=50.0,
                         help='Weak Mask Pixel Threshold')
     parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')
     parser.add_argument('-d', '--device', metavar='D', type=str, default=None,
                         help='pytorch device', dest='device')
-    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default=None,
+    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default='0',
                         help='SLURM job id', dest='jobID')
+    parser.add_argument('-m', '--mode', metavar='M', type=str, default='default',
+                        help='Mode of training - default, or perc_loss_only, or weak_mask_only', dest='mode')
 
     return parser.parse_args()
 
@@ -350,6 +362,7 @@ if __name__ == '__main__':
             device = torch.device('cpu')
 
     print(device)
+    print("Job_ID:", args.jobID, type(args.jobID), args.jobID[-1])
 
     logging.info(f'Using device {device}')
     logging.info(f'CPU workers available: {cpu_count()}')

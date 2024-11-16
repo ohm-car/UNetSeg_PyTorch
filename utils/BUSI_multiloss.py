@@ -59,7 +59,7 @@ class BUSIDataset(Dataset):
             # print(filename)
             img = self.load_image(filename)
             mask = self.load_image_masks(filename)
-            eroded_mask = self.eroded_image_masks(filename)
+            eroded_mask = self.eroded_image_masks(filename) if self.threshold != 0 else mask
             perc = self.get_perc(mask)
 
             images.append(img)
