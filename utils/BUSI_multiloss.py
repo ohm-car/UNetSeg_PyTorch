@@ -90,14 +90,13 @@ class BUSIDataset(Dataset):
                 M = M.convert(mode = '1')
             M = self.preprocess_mask(M, self.transform)
             mask += M
-        mask = torch.clamp(mask, max = 1.0)            
+        mask = torch.clamp(mask, max = 1.0)
         return mask
         # return masks
 
     def eroded_image_masks(self, filename):
 
         mask_file = glob(self.main_dir + filename + '_mask' + '*')
-        tp = imread(mask_file[0])
         # eroded_mask = np.expand_dims(np.zeros(self.im_res), axis=0)
         eroded_mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
         for mf in mask_file:

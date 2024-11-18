@@ -20,7 +20,7 @@ from architectures.pets.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss import PascalVOCDataset
-from utils.petsReconDataset_multiloss_pl import PetsReconDataset
+from utils.Pets_multiloss import PetsDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 
@@ -49,7 +49,7 @@ def get_dataloaders(args,
     dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
 
 
-    dataset = PetsReconDataset(dir_img, dir_mask, None, args.im_res)
+    dataset = PetsDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -285,6 +285,16 @@ def get_args():
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=160,
                         help='Input Image resolution')
+    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=50.0,
+                        help='Weak Mask Pixel Threshold')
+    parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
+                        help='Whether to pre-load images. Typically saves time reading and writing from disk.')
+    parser.add_argument('-d', '--device', metavar='D', type=str, default=None,
+                        help='pytorch device', dest='device')
+    parser.add_argument('-j', '--jobID', metavar='JD', type=str, default='0',
+                        help='SLURM job id', dest='jobID')
+    parser.add_argument('-m', '--mode', metavar='M', type=str, default='default',
+                        help='Mode of training - default, or perc_loss_only, or weak_mask_only', dest='mode')
 
     return parser.parse_args()
 
