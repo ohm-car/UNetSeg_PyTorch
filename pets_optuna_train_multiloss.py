@@ -175,6 +175,7 @@ def objective(trial,
                 mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
+                print(imgs_percs.shape)
 
                 pred_recon_img, pred_mask = net(imgs)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
