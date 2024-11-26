@@ -159,7 +159,7 @@ class PetsDataset(Dataset):
         return x
 
     def get_perc(self, filename):
-        return self.percsDict[filename]
+        return torch.Tensor([self.percsDict[filename]])
 
     def get_filenames(self):
         return self.file_list
