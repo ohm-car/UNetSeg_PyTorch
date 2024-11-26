@@ -45,7 +45,7 @@ class PetsDataset(Dataset):
                     if not file.startswith('.')][:400]
 
         if self.preload:
-            self.images, self.masks, self.eroded_masks, self.percs = self.load_data(imgs_dir, masks_dir)
+            self.images, self.masks, self.eroded_masks, self.percs = self.load_data()
             logging.info(f'Loaded dataset with {len(self.file_list)} examples')
 
         logging.info(f'Creating dataset with {len(self.file_list)} examples')
