@@ -145,10 +145,11 @@ def objective(trial,
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     # optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
-    if net.n_classes > 1:
-        recon_criterion = nn.L1Loss()
-    else:
-        recon_criterion = nn.L1Loss()
+
+    recon_criterion = nn.L1Loss()
+
+    # Loss criterion for weak mask
+    weak_mask_criterion = nn.BCELoss(reduction = 'sum')
 
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5

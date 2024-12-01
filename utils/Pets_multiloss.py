@@ -106,6 +106,10 @@ class PetsDataset(Dataset):
 
     def eroded_image_masks(self, filename):
 
+        # TODO -- Erosion is currently NOT WORKING as expected. Fix that first
+        # Issues are with the resize function - need to inspect and resize appropriately
+        # so that erosion will work as expected
+
         mask_file = glob(self.masks_dir + filename + '.*')
         assert len(mask_file) == 1, \
                 f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
@@ -113,12 +117,23 @@ class PetsDataset(Dataset):
         eroded_mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
         #Mask as np array
         M = imread(mask_file[0], as_gray = True)
+
+        assert 1 in M
+        assert 2 in M
+        assert 3 in M
+
         #resize np mask
         M = resize(M, self.im_res)
+
+        assert 1 in M
+        assert 2 in M
+        assert 3 in M
 
         M1 = ((M == 1) * 1.0)
         M2 = ((M == 2) * 1.0)
         M3 = ((M == 3) * 1.0)
+
+        #Sanity Checks on lines
 
         Mp = M1 + M3
 
