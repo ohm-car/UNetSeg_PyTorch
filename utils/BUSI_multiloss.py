@@ -22,7 +22,7 @@ from skimage.transform import resize
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class BUSIDataset(Dataset):
-    def __init__(self, root_dir, threshold = 50, im_res = 224, scale=1, mask_suffix='', preload = False):
+    def __init__(self, root_dir, threshold = 50, im_res = 224, scale=1, preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/Dataset_BUSI_with_GT/')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
@@ -33,7 +33,6 @@ class BUSIDataset(Dataset):
         self.num_classes = 1 + 1 #+1 for background
         self.im_res = (im_res, im_res)
         self.scale = scale
-        self.mask_suffix = mask_suffix
         self.threshold = threshold
 
         self.preload = preload
@@ -91,14 +90,13 @@ class BUSIDataset(Dataset):
                 M = M.convert(mode = '1')
             M = self.preprocess_mask(M, self.transform)
             mask += M
-        mask = torch.clamp(mask, max = 1.0)            
+        mask = torch.clamp(mask, max = 1.0)
         return mask
         # return masks
 
     def eroded_image_masks(self, filename):
 
         mask_file = glob(self.main_dir + filename + '_mask' + '*')
-        tp = imread(mask_file[0])
         # eroded_mask = np.expand_dims(np.zeros(self.im_res), axis=0)
         eroded_mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
         for mf in mask_file:
