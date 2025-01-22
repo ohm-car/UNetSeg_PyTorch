@@ -123,15 +123,20 @@ class PetsDataset(Dataset):
         assert 3 in M
 
         #resize np mask
+
+        M1 = ((M == 1) * 1.0)
+        M2 = ((M == 2) * 1.0)
+        M3 = ((M == 3) * 1.0)
+
         M = resize(M, self.im_res)
 
         assert 1 in M
         assert 2 in M
         assert 3 in M
 
-        M1 = ((M == 1) * 1.0)
-        M2 = ((M == 2) * 1.0)
-        M3 = ((M == 3) * 1.0)
+        # M1 = ((M == 1) * 1.0)
+        # M2 = ((M == 2) * 1.0)
+        # M3 = ((M == 3) * 1.0)
 
         #Sanity Checks on lines
 
