@@ -178,7 +178,8 @@ def objective(trial,
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
                 # print(imgs_percs.shape)
 
-                pred_recon_img, pred_mask = net(imgs)
+                outs = net(imgs)
+                pred_mask, pred_recon_img = outs['out'], outs['aux']
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
                 # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
                 # mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
