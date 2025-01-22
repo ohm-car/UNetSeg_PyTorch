@@ -32,6 +32,7 @@ class PetsDataset(Dataset):
         self.num_classes = 1 + 1 #+1 for background
         self.percsDict = self.getPercsDict()
         self.im_res = (im_res, im_res)
+        self.im_pad = (im_res - 1, im_res - 1)
         self.threshold = threshold
         self.preload = preload
 
@@ -118,9 +119,12 @@ class PetsDataset(Dataset):
         #Mask as np array
         M = imread(mask_file[0], as_gray = True)
 
-        assert 1 in M
-        assert 2 in M
-        assert 3 in M
+        assert 1 in M, \
+            f'Failed for file:{mask_file}'
+        assert 2 in M,\
+            f'Failed for file:{mask_file}'
+        assert 3 in M,\
+            f'Failed for file:{mask_file}'
 
         #resize np mask
 
@@ -128,19 +132,25 @@ class PetsDataset(Dataset):
         M2 = ((M == 2) * 1.0)
         M3 = ((M == 3) * 1.0)
 
-        M = resize(M, self.im_res)
+        Mp = M1 + M3
 
-        assert 1 in M
-        assert 2 in M
-        assert 3 in M
+        Mp = resize(Mp, self.im_pad)
+        Mp = np.pad(Mp, ((1,1),(1,1)), 'constant', constant_values=(0))
+
+        # assert 0 in Mp
+        # assert 1 in Mp
+        # assert 2 not in Mp
+        # assert 3 not in Mp
+
+        if 1 not in Mp:
+            print(mask_file)
+        # print(0 in Mp, 1 in Mp, 2 in Mp, 3 in Mp)
 
         # M1 = ((M == 1) * 1.0)
         # M2 = ((M == 2) * 1.0)
         # M3 = ((M == 3) * 1.0)
 
         #Sanity Checks on lines
-
-        Mp = M1 + M3
 
         eroded_mask = self.eroded_mask(Mp)
 
