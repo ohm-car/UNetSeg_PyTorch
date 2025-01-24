@@ -15,7 +15,7 @@ import datetime
 import optuna
 import time
 
-from eval_multiloss import eval_net
+from pets_eval_multiloss import eval_net
 from architectures.pets.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
