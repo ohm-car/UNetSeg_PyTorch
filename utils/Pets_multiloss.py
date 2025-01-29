@@ -46,6 +46,7 @@ class PetsDataset(Dataset):
 
         self.file_list = [splitext(file)[0] for file in listdir(self.imgs_dir)
                     if not file.startswith('.')]
+        self.bad_files = list()
 
         if self.preload:
             self.images, self.masks, self.eroded_masks, self.percs = self.load_data()
@@ -68,10 +69,14 @@ class PetsDataset(Dataset):
             eroded_mask = self.eroded_image_masks(filename) if self.threshold != 0 else mask
             perc = self.get_perc(filename)
 
-            images.append(img)
-            masks.append(mask)
-            eroded_masks.append(eroded_mask)
-            percs.append(perc)
+            if eroded_mask is not None:
+                images.append(img)
+                masks.append(mask)
+                eroded_masks.append(eroded_mask)
+                percs.append(perc)
+            else:
+                self.bad_files.append(filename)
+                self.file_list.remove(filename)
 
         return images, masks, eroded_masks, percs
 
@@ -139,21 +144,16 @@ class PetsDataset(Dataset):
         Mp = M1 + M3
 
         if 1 not in Mp:
-            print(mask_file, "Check 1")
-            print(0 in Mp, 1 in Mp, 2 in Mp, 3 in Mp)
+            self.bad_files.append(filename)
 
         # Mp = resize(Mp, self.im_res)
-        Mp = resize(Mp, self.im_pad)
+        Mp = resize(Mp, self.im_pad).round()
         Mp = np.pad(Mp, ((1,1),(1,1)), 'constant', constant_values=(0))
 
         # assert 0 in Mp
         # assert 1 in Mp
         # assert 2 not in Mp
         # assert 3 not in Mp
-
-        if 1 not in Mp:
-            print(mask_file, "Check 2")
-            print(0 in Mp, 1 in Mp, 2 in Mp, 3 in Mp)
 
         # M1 = ((M == 1) * 1.0)
         # M2 = ((M == 2) * 1.0)
