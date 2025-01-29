@@ -45,7 +45,7 @@ class PetsDataset(Dataset):
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.file_list = [splitext(file)[0] for file in listdir(self.imgs_dir)
-                    if not file.startswith('.')][:400]
+                    if not file.startswith('.')]
         self.bad_files = list()
 
         if self.preload:
