@@ -20,7 +20,6 @@ from architectures.busi.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss import PascalVOCDataset
-# from utils.petsReconDataset_multiloss_pl import PetsReconDataset
 from utils.BUSI_multiloss import BUSIDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
@@ -202,7 +201,6 @@ def objective(trial,
                 # pred_recon_img, pred_mask = net(imgs)
                 outs = net(imgs)
                 pred_mask, pred_recon_img = outs['out'], outs['aux']
-                # print("Shapes: ", pred_recon_img.shape, pred_mask.shape)
                 # pred_recon_img = torch.argmax(pred_recon_img, dim=1)
                 # print("Masks Pred shape:", pred_recon_img.shape, "True Masks shape:", recon_img.shape)
                 # mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
@@ -216,7 +214,6 @@ def objective(trial,
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
-                # pred_mask_sigmoid = F.sigmoid(pred_mask)
                 perc_loss = mask_criterion(pred_mask, imgs_percs)
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss

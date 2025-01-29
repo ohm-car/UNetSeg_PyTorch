@@ -33,7 +33,7 @@ class PetsDataset(Dataset):
         self.num_classes = 1 + 1 #+1 for background
         self.percsDict = self.getPercsDict()
         self.im_res = (im_res, im_res)
-        self.im_pad = (im_res - 1, im_res - 1)
+        self.im_pad = (im_res - 2, im_res - 2)
         self.threshold = threshold
         self.preload = preload
         print(self.im_res, self.im_pad)
@@ -183,7 +183,7 @@ class PetsDataset(Dataset):
             
         # print(pixels)
         
-        return torch.from_numpy(e_mask)
+        return torch.unsqueeze(torch.from_numpy(e_mask), dim=0)
 
     def getPercsDict(self):
         

@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch import optim
 from tqdm import tqdm
 import torchsummary
@@ -23,6 +24,7 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.Pets_multiloss import PetsDataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 
 # root_dir = Path().resolve().parent
 # dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
@@ -45,9 +47,6 @@ def get_dataloaders(args,
     global n_train, n_val
 
     root_dir = args.rd
-    dir_img = os.path.join(root_dir, 'Datasets/petsData/images/')
-    dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
-
 
     dataset = PetsDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
     n_val = int(len(dataset) * val_percent)
@@ -76,6 +75,21 @@ def get_model():
     net.to(device=device)
     return net
 
+# def get_model():
+
+#     # model = fcn_resnet50(aux_loss=True)
+#     model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
+#     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+#                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+#                  nn.ReLU(inplace=True),
+#                  nn.Dropout(p=0.1, inplace=False),
+#                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+#                  nn.Sigmoid())
+#     model.aux_classifier = aux
+#     model.classifier.append(nn.Sigmoid())
+#     model.to(device=device)
+#     return model
+
 def objective(trial,
               args,
               device,
@@ -99,7 +113,10 @@ def objective(trial,
     # dir_mask = os.path.join(root_dir, 'Datasets/petsData/annotations/trimaps/')
     # print(dir_mask, type(dir_mask))
     # tm = datetime.datetime.now()
-    dir_checkpoint = 'checkpoints/optuna/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
+    if args.jobID:
+        dir_checkpoint = 'checkpoints/final_runs/pets/{}/'.format(args.jobID)
+    else:
+        dir_checkpoint = 'checkpoints/optuna/pets/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
     try:
         os.makedirs(dir_checkpoint, exist_ok=True)
         logging.info('Created checkpoint directory')
@@ -125,7 +142,8 @@ def objective(trial,
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
     regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
-    writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
+    # writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
+    writer = SummaryWriter(comment=f'JobID_{args.jobID}_Trial_{trial.number}_SCALE_{img_scale}')
     global_step = 0
 
     logging.info(f'''Starting training:
@@ -145,14 +163,16 @@ def objective(trial,
     # optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     # optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=1e-8)
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
-
     recon_criterion = nn.L1Loss()
 
     # Loss criterion for weak mask
     weak_mask_criterion = nn.BCELoss(reduction = 'sum')
+    # weak_mask_criterion = nn.BCEWithLogitsLoss()
 
     mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
+
+    save_iou_thresh = 0.5
 
     for epoch in range(epochs):
         net.train()
@@ -167,15 +187,17 @@ def objective(trial,
                 imgs = batch['image']
                 recon_img = batch['reconstructed_image']
                 imgs_percs = batch['mask_perc']
+                weak_mask = batch['comp_mask']
                 assert imgs.shape[1] == net.n_channels, \
                     f'Network has been defined with {net.n_channels} input channels, ' \
                     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
                     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
-                mask_type = torch.float32 if net.n_classes == 1 else torch.long
+                # mask_type = torch.float32 if net.n_classes == 1 else torch.long
                 recon_img = recon_img.to(device=device, dtype=torch.float32)
                 imgs_percs = imgs_percs.to(device=device, dtype=torch.float32)
+                weak_mask = weak_mask.to(device=device, dtype=torch.float32)
                 # print(imgs_percs.shape)
 
                 outs = net(imgs)
@@ -185,15 +207,32 @@ def objective(trial,
                 # mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
                 # mask_criterion = nn.L1Loss()
 
+                # BCELoss for partial masks
+
+                weak_pred_mask = pred_mask * weak_mask
+                weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask)
+
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
                 # print(torch.squeeze(pred_mask).shape)
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
                 perc_loss = mask_criterion(pred_mask, imgs_percs)
                 total_loss = loss + perc_loss
                 epoch_loss += loss.item() + perc_loss.item()
+
+                if args.mode == 'perc_loss_only':
+                    total_loss = loss + perc_loss
+                elif args.mode == 'weak_mask_only':
+                    total_loss = loss + weak_loss
+                else:
+                    total_loss = loss + perc_loss + weak_loss
+
+                # total_loss = loss + perc_loss + weak_loss
+                # total_loss = loss + weak_loss
+                # epoch_loss += loss.item() + perc_loss.item()
+                epoch_loss += loss.item() + perc_loss.item() + weak_loss.item()
                 writer.add_scalar('Loss/train', total_loss.item(), global_step)
 
-                pbar.set_postfix(**{'percLoss (batch)': perc_loss.item(), 'reconstruction loss': loss.item(),'total loss (batch)': total_loss.item()})
+                pbar.set_postfix(**{'percLoss (batch)': perc_loss.item(), 'reconstruction loss': loss.item(), 'weak loss': weak_loss.item(), 'total loss (batch)': total_loss.item()})
 
                 optimizer.zero_grad()
                 total_loss.backward()
@@ -212,16 +251,18 @@ def objective(trial,
                 # if global_step % (n_train // (100 * batch_size) + 1) == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
-                        writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
-                        writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device, regularizer)
+                        if value.grad is not None:
+                            writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
+                            writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
+                    val_score = eval_net(net, val_loader, device, regularizer, epoch)
                     # scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
-                    if net.n_classes > 1:
-                        logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
-                        writer.add_scalar('Loss/test', val_score[0], global_step)
-                    else:
+                    # if net.n_classes > 1:
+                    #     logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
+                    #     writer.add_scalar('Loss/test', val_score[0], global_step)
+                    # else:
+                    if True:
                         logging.info('Validation L1 loss: Total: {}, Mask: {}, Recon: {}, Batch IoU: {}'.format(val_score[0], val_score[1], val_score[2], val_score[3]))
                         writer.add_scalar('Loss/test', val_score[0], global_step)
                         writer.add_scalar('Recon/test', val_score[1], global_step)
@@ -229,15 +270,16 @@ def objective(trial,
                         writer.add_scalar('IoU/test', val_score[3], global_step)
 
                     writer.add_images('images', imgs, global_step)
-                    if net.n_classes == 1:
+                    if True:
                         writer.add_images('masks/true', recon_img, global_step)
                         writer.add_images('masks/pred', torch.sigmoid(pred_recon_img) > 0.5, global_step)
 
-                    save_cp = val_score[3] > 0.55
+                    save_cp = (val_score[3] > save_iou_thresh) or (epoch + 1 == epochs)
 
         if save_cp:
             torch.save(net.state_dict(),
                            dir_checkpoint + f'CP_Trial{trial.number}_Epoch{epoch + 1}.pth')
+            save_iou_thresh = val_score[3] * 1.035
             logging.info(f'Checkpoint Saved!')
 
         # if save_cp:
