@@ -7,8 +7,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
 #SBATCH --constraint=rtx_2080
-#SBATCH --output=outfiles/final/busi/output_%A_%a.log
-#SBATCH --error=outfiles/final/busi/output_%A_%a.err
+#SBATCH --output=outfiles/final/pets/output_%A_%a.log
+#SBATCH --error=outfiles/final/pets/output_%A_%a.err
 
 DT=`date +"%m-%d_%H-%M"`
 
@@ -31,7 +31,7 @@ source activate unet
 # 	echo "Nothin"
 # fi
 
-th=(0 0.04 0.08 0.12 0.16 0.2 50 50)
+th=(0 0.01 0.02 0.04 0.08 0.12 50 50)
 md=('perc_loss_only' 'default' 'default' 'default' 'default' 'default' 'default' 'weak_mask_only')
 echo "The threshold is: ${th[1]}"
 echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
@@ -39,7 +39,7 @@ echo "The mode is: ${md[$SLURM_ARRAY_TASK_ID]}"
 concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 echo "Concatenated ID: $concatenated_id"
 
-python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=32 -ir=224 -th=${th[$SLURM_ARRAY_TASK_ID]} -j=$concatenated_id -m=${md[$SLURM_ARRAY_TASK_ID]}
+python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/pets_optuna_train_multiloss.py -pl=True -e=80 -b=32 -ir=224 -th=${th[$SLURM_ARRAY_TASK_ID]} -j=$concatenated_id -m=${md[$SLURM_ARRAY_TASK_ID]}
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
