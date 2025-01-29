@@ -286,7 +286,7 @@ def get_args():
                         help='Root Directory for dataset', dest='rd')
     parser.add_argument('-cp', '--save_cp', dest='savecp', type=bool, default=False,
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
-    parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=160,
+    parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
     parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=50.0,
                         help='Weak Mask Pixel Threshold')

@@ -13,9 +13,10 @@ from torch.nn.functional import one_hot
 import torchvision.transforms as transforms
 import csv
 import numpy as np
+import skimage
 from skimage.morphology import square, erosion, binary_erosion
 from skimage.color import rgb2gray
-from skimage.io import imread
+from skimage import io
 from skimage.transform import resize
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 """This dataset class preloads the entire dataset into the GPU memory (line 33, load_data() function). Not the best practice, but this is useful in
@@ -35,6 +36,7 @@ class PetsDataset(Dataset):
         self.im_pad = (im_res - 1, im_res - 1)
         self.threshold = threshold
         self.preload = preload
+        print(self.im_res, self.im_pad)
 
         self.transform = transforms.Compose([transforms.PILToTensor()])
         # print(self.percsDict)
@@ -43,7 +45,7 @@ class PetsDataset(Dataset):
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
 
         self.file_list = [splitext(file)[0] for file in listdir(self.imgs_dir)
-                    if not file.startswith('.')][:400]
+                    if not file.startswith('.')]
 
         if self.preload:
             self.images, self.masks, self.eroded_masks, self.percs = self.load_data()
@@ -115,16 +117,18 @@ class PetsDataset(Dataset):
         assert len(mask_file) == 1, \
                 f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
         # eroded_mask = np.expand_dims(np.zeros(self.im_res), axis=0)
-        eroded_mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
+        # eroded_mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
         #Mask as np array
-        M = imread(mask_file[0], as_gray = True)
+        # M = imread(mask_file[0], as_gray = True)
+        M = io.imread(mask_file[0])
 
-        assert 1 in M, \
-            f'Failed for file:{mask_file}'
-        assert 2 in M,\
-            f'Failed for file:{mask_file}'
-        assert 3 in M,\
-            f'Failed for file:{mask_file}'
+
+        # assert 1 in M, \
+        #     f'Failed for file:{mask_file}'
+        # assert 2 in M,\
+        #     f'Failed for file:{mask_file}'
+        # assert 3 in M,\
+        #     f'Failed for file:{mask_file}'
 
         #resize np mask
 
@@ -134,6 +138,11 @@ class PetsDataset(Dataset):
 
         Mp = M1 + M3
 
+        if 1 not in Mp:
+            print(mask_file, "Check 1")
+            print(0 in Mp, 1 in Mp, 2 in Mp, 3 in Mp)
+
+        # Mp = resize(Mp, self.im_res)
         Mp = resize(Mp, self.im_pad)
         Mp = np.pad(Mp, ((1,1),(1,1)), 'constant', constant_values=(0))
 
@@ -143,8 +152,8 @@ class PetsDataset(Dataset):
         # assert 3 not in Mp
 
         if 1 not in Mp:
-            print(mask_file)
-        # print(0 in Mp, 1 in Mp, 2 in Mp, 3 in Mp)
+            print(mask_file, "Check 2")
+            print(0 in Mp, 1 in Mp, 2 in Mp, 3 in Mp)
 
         # M1 = ((M == 1) * 1.0)
         # M2 = ((M == 2) * 1.0)

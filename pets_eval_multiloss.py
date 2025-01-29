@@ -27,7 +27,8 @@ def eval_net(net, loader, device, regularizer):
             true_perc = true_perc.to(device=device, dtype=torch.float32)
 
             with torch.no_grad():
-                pred_recon_img, pred_mask = net(imgs)
+                outs = net(imgs)
+                pred_mask, pred_recon_img = outs['out'], outs['aux']
 
             if net.n_classes > 1:
                 recon_loss_batch = F.l1_loss(pred_recon_img, recon_img).item()
