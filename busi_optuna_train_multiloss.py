@@ -50,13 +50,18 @@ def get_dataloaders(args,
 
     dataset = BUSIDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
     n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - n_val
-    train, val = random_split(dataset, [n_train, n_val])
+    n_train = len(dataset) - 2*n_val
+    train, val, test = random_split(dataset, [n_train, n_val, n_val])
+
+    # n_train = len(dataset)
 
     train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True, num_workers = 2)
     val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2, pin_memory=True)
+    test_loader = DataLoader(test, batch_size=args.batchsize, shuffle=True, num_workers = 2)
 
-    return train_loader, val_loader
+    print("Loader lengths: ", len(train_loader), len(val_loader), len(test_loader))
+
+    return train_loader, val_loader, test_loader
 
 def get_model():
 
@@ -95,6 +100,7 @@ def objective(trial,
               device,
               train_loader,
               val_loader,
+              test_loader,
               net=None,
               epochs=5,
               batch_size=1,
@@ -394,7 +400,7 @@ if __name__ == '__main__':
     # faster convolutions, but more memory
     # cudnn.benchmark = True
 
-    train_loader, val_loader = get_dataloaders(args)
+    train_loader, val_loader, test_loader = get_dataloaders(args)
 
     study = optuna.create_study(direction='maximize')
 
@@ -407,6 +413,7 @@ if __name__ == '__main__':
                                                 device=device,
                                                 train_loader = train_loader,
                                                 val_loader = val_loader,
+                                                test_loader = test_loader,
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
