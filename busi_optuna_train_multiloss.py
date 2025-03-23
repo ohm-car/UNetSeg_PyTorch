@@ -41,6 +41,28 @@ dir_checkpoint = None
 n_train = None
 n_val = None
 
+# def get_dataloaders(args,
+#                     val_percent=0.1):
+
+#     global n_train, n_val
+
+#     root_dir = args.rd
+
+#     dataset = BUSIDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+#     n_val = int(len(dataset) * val_percent)
+#     n_train = len(dataset) - 2*n_val
+#     train, val, test = random_split(dataset, [n_train, n_val, n_val])
+
+#     # n_train = len(dataset)
+
+#     train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True, num_workers = 2)
+#     val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2, pin_memory=True)
+#     test_loader = DataLoader(test, batch_size=args.batchsize, shuffle=True, num_workers = 2)
+
+#     print("Loader lengths: ", len(train_loader), len(val_loader), len(test_loader))
+
+#     return train_loader, val_loader, test_loader
+
 def get_dataloaders(args,
                     val_percent=0.1):
 
@@ -48,52 +70,54 @@ def get_dataloaders(args,
 
     root_dir = args.rd
 
-    dataset = BUSIDataset(root_dir, im_res = args.im_res, threshold = args.threshold, preload = args.preload)
-    n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - 2*n_val
-    train, val, test = random_split(dataset, [n_train, n_val, n_val])
+    train = BUSIDataset(root_dir, file_list_path = 'train.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    val = BUSIDataset(root_dir, file_list_path = 'val.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    test = BUSIDataset(root_dir, file_list_path = 'test.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    n_val = len(val)
+    n_train = len(train)
+    # train, val, test = random_split(dataset, [n_train, n_val, n_val])
 
     # n_train = len(dataset)
 
     train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True, num_workers = 2)
-    val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2, pin_memory=True)
+    val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2)
     test_loader = DataLoader(test, batch_size=args.batchsize, shuffle=True, num_workers = 2)
 
     print("Loader lengths: ", len(train_loader), len(val_loader), len(test_loader))
 
     return train_loader, val_loader, test_loader
 
-def get_model():
-
-    net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
-    logging.info(f'Network:\n'
-                 f'\t{net.n_channels} input channels\n'
-                 f'\t{net.n_classes} output channels (classes)\n'
-                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
-
-    if args.load:
-        net.load_state_dict(
-            torch.load(args.load, map_location=device)
-        )
-        logging.info(f'Model loaded from {args.load}')
-
-    net.to(device=device)
-    return net
-
 # def get_model():
 
-#     # model = fcn_resnet50(aux_loss=True)
-#     model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
-#     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
-#                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-#                  nn.ReLU(inplace=True),
-#                  nn.Dropout(p=0.1, inplace=False),
-#                  nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
-#                  nn.Sigmoid())
-#     model.aux_classifier = aux
-#     model.classifier.append(nn.Sigmoid())
-#     model.to(device=device)
-#     return model
+#     net = UNet(n_channels=3, n_classes=args.classes, bilinear=True)
+#     logging.info(f'Network:\n'
+#                  f'\t{net.n_channels} input channels\n'
+#                  f'\t{net.n_classes} output channels (classes)\n'
+#                  f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+
+#     if args.load:
+#         net.load_state_dict(
+#             torch.load(args.load, map_location=device)
+#         )
+#         logging.info(f'Model loaded from {args.load}')
+
+#     net.to(device=device)
+#     return net
+
+def get_model():
+
+    # model = fcn_resnet50(aux_loss=True)
+    model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
+    aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+                 nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+                 nn.ReLU(inplace=True),
+                 nn.Dropout(p=0.1, inplace=False),
+                 nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+                 nn.Sigmoid())
+    model.aux_classifier = aux
+    model.classifier.append(nn.Sigmoid())
+    model.to(device=device)
+    return model
 
 def objective(trial,
               args,
@@ -417,7 +441,7 @@ if __name__ == '__main__':
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
-                                                save_freq = args.saveFreq), n_trials = 1)
+                                                save_freq = args.saveFreq), n_trials = 60)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
