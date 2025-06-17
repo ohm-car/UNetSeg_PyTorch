@@ -22,12 +22,16 @@ from skimage.transform import resize
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class BUSIDataset(Dataset):
-    def __init__(self, root_dir, threshold = 50, im_res = 224, scale=1, preload = False):
+    def __init__(self, root_dir, file_list_path = None, threshold = 50, im_res = 224, scale=1, preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/Dataset_BUSI_with_GT/')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
-        self.file_list = self.get_filenames(self.main_dir)
+        if file_list_path:
+            tp_path = os.path.join(root_dir, 'UNetSeg_PyTorch/utils/BUSI_multiloss', file_list_path)
+            self.file_list = self.get_filenames_from_file(tp_path)
+        else:
+            self.file_list = self.get_filenames(self.main_dir)
         # print(self.file_list)
 
         self.num_classes = 1 + 1 #+1 for background
@@ -72,7 +76,7 @@ class BUSIDataset(Dataset):
 
         img_file = glob(self.main_dir + filename + '.*')
         assert len(img_file) == 1, \
-            f'Either no image or multiple images found for the ID {i}: {img_file}'
+            f'Either no image or multiple images found for the ID {filename}: {img_file}'
         T = Image.open(img_file[0])
         if T.mode != 'RGB':
             T = T.convert(mode = 'RGB')
@@ -175,6 +179,17 @@ class BUSIDataset(Dataset):
             fname = i.split('.')[0]
             if fname[-1] == ')':
                 file_list.append(f'malignant/{fname}')
+
+        return file_list
+
+    def get_filenames_from_file(self, path):
+
+        file_list = list()
+
+        f = open(path)
+        temp_fl = f.read().split(',')
+        for k in range(len(temp_fl)):
+            file_list.append(temp_fl[k].replace("'", "").strip())
 
         return file_list
 
