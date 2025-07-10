@@ -18,6 +18,7 @@ from skimage.morphology import square, erosion, binary_erosion
 from skimage.color import rgb2gray
 from skimage.io import imread
 from skimage.transform import resize
+import random
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
@@ -182,6 +183,17 @@ class KiTS_Dataset(Dataset):
 
         return file_list
 
+    def get_all_slices_of_case(self, case_id):
+
+        tp_slices = glob(os.path.join(self.main_dir, 'images', case_id) + '*')
+
+        slices = list()
+
+        for tp_slice in tp_slices:
+            slices.append(tp_slice.split('/')[-1])
+
+        return slices
+
     def get_filenames_from_file(self, path):
 
         file_list = list()
@@ -190,13 +202,15 @@ class KiTS_Dataset(Dataset):
         temp_fl = f.read().split(',')
 
         # Add code to get all slices from the given case number
-
-        
-
-
         for k in range(len(temp_fl)):
-            file_list.append(temp_fl[k].replace("'", "").strip())
+            # subfiles = self.get_all_slices_of_case(temp_fl[k])
+            subfiles = self.get_all_slices_of_case(temp_fl[k].replace("'", "").strip())
+            for subfile in subfiles:
+                file_list.append(subfile)
 
+            # file_list.append(temp_fl[k].replace("'", "").strip())
+
+        random.shuffle(file_list)
         return file_list
 
     def preprocess_mask(self, pil_mask, transform):
