@@ -75,13 +75,15 @@ class KiTS_Dataset(Dataset):
 
     def load_image(self, filename):
 
-        img_file = glob(self.main_dir + filename + '.*')
+        # img_file = glob(self.main_dir + filename + '.*')
+        img_file = glob(os.path.join(self.main_dir, 'images', filename + '*'))
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {filename}: {img_file}'
-        T = Image.open(img_file[0])
-        if T.mode != 'RGB':
-            T = T.convert(mode = 'RGB')
-        T = self.preprocess(T, self.transform)
+        T = np.load(img_file[0])
+        T = torch.from_numpy(T)
+        # if T.mode != 'RGB':
+        #     T = T.convert(mode = 'RGB')
+        # T = self.preprocess(T, self.transform)
         return T
 
     def load_image_masks(self, filename):
