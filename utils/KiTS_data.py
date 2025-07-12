@@ -23,7 +23,7 @@ import random
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class KiTS_Dataset(Dataset):
-    def __init__(self, root_dir, file_list_path = None, threshold = 50, im_res = 224, scale=1, preload = False):
+    def __init__(self, root_dir, file_list_path = None, threshold = 50, im_res = 512, scale=1, preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/KiTS23_DL')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
@@ -63,7 +63,7 @@ class KiTS_Dataset(Dataset):
             # print(filename)
             img = self.load_image(filename)
             mask = self.load_image_masks(filename)
-            eroded_mask = self.eroded_image_masks(filename) if self.threshold != 0 else mask
+            eroded_mask = self.eroded_mask(filename) if self.threshold != 0 else mask
             perc = self.get_perc(mask)
 
             images.append(img)
@@ -75,7 +75,6 @@ class KiTS_Dataset(Dataset):
 
     def load_image(self, filename):
 
-        # img_file = glob(self.main_dir + filename + '.*')
         img_file = glob(os.path.join(self.main_dir, 'images', filename + '*'))
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {filename}: {img_file}'
@@ -86,39 +85,32 @@ class KiTS_Dataset(Dataset):
         # T = self.preprocess(T, self.transform)
         return T
 
-    def load_image_masks(self, filename):
+    def load_image_mask(self, filename):
 
-        mask_file = glob(self.main_dir + filename + '_mask' + '*')
-        mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
-        for mf in mask_file:
+        mask_file = glob(os.path.join(self.main_dir, 'gt_masks', filename + '*'))
+        assert len(mask_file) == 1, \
+            f'Either no image or multiple images found for the ID {filename}: {img_file}'
             #Mask as torch Tensor
-            M = Image.open(mf)
-            if M.mode != '1':
-                M = M.convert(mode = '1')
-            M = self.preprocess_mask(M, self.transform)
-            mask += M
-        mask = torch.clamp(mask, max = 1.0)
-        return mask
-        # return masks
+        M = np.load(mask_file[0])
+        # if M.mode != '1':
+        #     M = M.convert(mode = '1')
+        # M = self.preprocess_mask(M, self.transform)
+        # mask += M
+        M = torch.from_numpy(M)
+        # mask = torch.clamp(mask, max = 1.0)
+        return M
 
-    def eroded_image_masks(self, filename):
-
-        mask_file = glob(self.main_dir + filename + '_mask' + '*')
-        # eroded_mask = np.expand_dims(np.zeros(self.im_res), axis=0)
-        eroded_mask = torch.unsqueeze(torch.zeros(self.im_res), dim=0)
-        for mf in mask_file:
-            #Mask as np array
-            M = imread(mf, as_gray = True)
-            #resize np mask
-            M = resize(M, self.im_res)
-            e_M = self.eroded_mask(M)
-            eroded_mask += e_M
-
-        return eroded_mask
-
-    def eroded_mask(self, mask):
+    def eroded_mask(self, filename):
 
         # o_pixels = np.sum(mask)
+        mask_file = glob(os.path.join(self.main_dir, 'gt_masks', filename + '*'))
+        assert len(mask_file) == 1, \
+            f'Either no image or multiple images found for the ID {filename}: {img_file}'
+            #Mask as torch Tensor
+        M = np.load(mask_file[0])
+
+        #TODO: Code to erode the loaded mask
+
         e_mask = mask
         pixels = np.sum(e_mask)
         if self.threshold < 1.0:
@@ -141,27 +133,6 @@ class KiTS_Dataset(Dataset):
 
     def __len__(self):
         return len(self.file_list)
-
-    # def getPercsDict(self, percs_dir):
-        
-    #     x = dict()
-    #     f = open('utils/percs.csv', 'r')
-    #     reader = csv.reader(f)
-
-    #     for row in reader:
-    #         x[row[0].split('/')[-1]] = float(row[1])
-    #     # print(x)
-    #     return x
-
-    # def get_percs(self, mask):
-
-    #     percs = list()
-
-    #     for i in range(self.num_classes):
-
-    #         percs.append(torch.mean((mask == i) * 1.0))
-
-    #     return torch.tensor(percs)
 
     def get_perc(self, mask):
 
@@ -243,56 +214,6 @@ class KiTS_Dataset(Dataset):
         return torch.tensor(partial_mask)
 
 
-    # @classmethod
-    # def preprocess(cls, pil_img, scale, isImage):
-    #     w, h = pil_img.size
-    #     newW, newH = int(scale * w), int(scale * h)
-    #     assert newW > 0 and newH > 0, 'Scale is too small'
-    #     pil_img = pil_img.resize((160, 160))
-
-    #     img_nd = np.array(pil_img)
-
-    #     if len(img_nd.shape) == 2:
-    #         img_nd -= 1
-    #         # img_nd = np.expand_dims(img_nd, axis=2)
-
-    #     # if not isImage:
-    #         # img_nd = cls.onehot_initialization(cls, img_nd)
-    #         # img_nd -= 1
-    #         # img_nd = (np.arange(img_nd.max()+1) == img_nd[...,None]).astype(int)
-    #         # print(img_nd.shape)
-
-    #     # HWC to CHW
-        
-    #     if isImage:
-    #         img_trans = img_nd.transpose((2, 0, 1))
-    #         if img_trans.max() > 1:
-    #             img_trans = img_trans / 255
-    #     else:
-    #         img_trans = img_nd
-
-    #     return img_trans
-
-    # def processMask(self, pilmask):
-
-    #     mask = np.asarray(pilmask)
-
-    #     mask = np.sum(mask, axis = 2)
-    #     mask = mask == 765
-
-    #     return Image.fromarray(np.uint8(mask))
-
-    # def all_idx(self, idx, axis):
-    #     grid = np.ogrid[tuple(map(slice, idx.shape))]
-    #     grid.insert(axis, idx)
-    #     return tuple(grid)
-
-    # def onehot_initialization(self, a):
-    #     ncols = a.max()+1
-    #     out = np.zeros(a.shape + (ncols,), dtype=int)
-    #     out[self.all_idx(a, axis=2)] = 1
-    #     return out
-
     def __getitem__(self, i):
         
         if self.preload:
@@ -327,60 +248,3 @@ class KiTS_Dataset(Dataset):
             'comp_mask': Mc,
             'mask_perc': P
         }
-
-    # def __getitem__(self, i):
-    #     idx = self.file_list[i]
-    #     # print(self.imgs_dir, self.masks_dir, self.mask_suffix)
-
-    #     img_file = glob(self.main_dir + idx + '.*')
-
-    #     mask_file = glob(self.main_dir + idx + '_mask' + '.*')
-
-    #     assert len(img_file) == 1, \
-    #         f'Either no image or multiple images found for the ID {i}: {img_file}'
-
-    #     assert len(mask_file) == 1, \
-    #         f'Either no mask or multiple masks found for the ID {i}: {mask_file}'
-
-    #     T = Image.open(img_file[0])
-    #     if T.mode != 'RGB':
-    #         T = T.convert(mode = 'RGB')
-
-    #     T = self.preprocess(T, self.transform)
-    #     # print("Image tensor type ", T)
-
-
-    #     M = Image.open(mask_file[0])
-    #     # print(M.mode)
-    #     # assert M.mode == 'L' or M.mode == '1', \
-    #     #     f'Error with file {mask_file}'
-
-    #     M = self.preprocess_mask(M, self.transform)
-    #     # print("Mask tensor type ", M)
-    #     # print("Mask shape: ", M.shape)
-
-    #     # M = M - ((M == 255) * 255)
-    #     assert torch.max(M) == 1.0 and torch.min(M) == 0,\
-    #         f'Check mask file'
-
-    #     P = self.get_perc(M)
-    #     # print(P)
-
-    #     # Mp = M1 + M3
-    #     # print(M.shape, torch.squeeze(M).shape, M.dtype)
-    #     # Mp = torch.permute(one_hot(torch.squeeze(M), num_classes = self.num_classes), (2, 0, 1))
-    #     # Mp = torch.permute(torch.squeeze(M), (2, 0, 1))
-    #     # Mp = torch.squeeze(M)
-    #     Mc = self.gen_partial_mask(M)
-
-    #     assert Mc.size() == M.size(), \
-    #         f'Shapes mismatch {Mc.size()} != {M.size()}'
-
-    #     return {
-    #         'image_ID': idx,
-    #         'image': T,
-    #         'reconstructed_image': T,
-    #         'mask': M,
-    #         'comp_mask': Mc,
-    #         'mask_perc': P
-    #     }
