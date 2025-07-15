@@ -122,11 +122,17 @@ class KiTS_Dataset(Dataset):
 
         np_mask_oh = self.np_one_hot(np_mask)
 
+        # Remove background
+        np_mask_oh = np_mask_oh[:,:,1:]
+
+        # Since a tumor pixel is also a kidney pixel, add the tumor ones to the kidney
+        np_mask_oh[:,:,0] = np_mask_oh[:,:,0] + np_mask_oh[:,:,1]
+
         er_mask = np.zeros(np_mask_oh.shape)
 
         #TODO: Code to erode the loaded mask
 
-        for i in range(self.num_classes):
+        for i in range(self.num_classes - 1):
             e_mask = np_mask_oh[:,:,i]
             pixels = np.sum(e_mask)
             if self.threshold < 1.0:
@@ -153,7 +159,7 @@ class KiTS_Dataset(Dataset):
     def get_perc(self, mask):
 
         perc = torch.mean(mask.float(), (0,1))
-        print(perc.size, perc)
+        # print(perc.size(), perc)
 
         return perc
 
@@ -200,6 +206,9 @@ class KiTS_Dataset(Dataset):
 
         # Remove background
         imgM = imgM[:,:,1:]
+
+        # Since a tumor pixel is also a kidney pixel, add the tumor ones to the kidney
+        imgM[:,:,0] = imgM[:,:,0] + imgM[:,:,1]
 
         return imgM
 
