@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 import logging
 import PIL
 from PIL import Image, ImageOps
-from torch.nn.functional import one_hot
+import torch.nn.functional as F
 import torchvision.transforms as transforms
 import csv
 import numpy as np
@@ -23,20 +23,27 @@ import random
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class KiTS_Dataset(Dataset):
-    def __init__(self, root_dir, file_list_path = None, threshold = 50, im_res = 512, scale=1, preload = False):
+    def __init__(self, root_dir, file_list_path = None, threshold = 100, im_res = 512, scale=1, preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/KiTS23_DL')
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
         if file_list_path:
             tp_path = os.path.join(root_dir, 'UNetSeg_PyTorch/utils/KiTS_multiloss', file_list_path)
-            self.file_list = self.get_filenames_from_file(tp_path)
+            self.file_list = self.get_filenames_from_file(tp_path)[:100]
         else:
-            self.file_list = self.get_filenames(self.main_dir)
-        # print(self.file_list)
+            raise Exception("Variable file_list_path required.")
+        print("File List: ", self.file_list)
 
-        self.num_classes = 1 + 1 #+1 for background
-        self.im_res = (im_res, im_res)
+        # Class Labels:
+        # 0: Background
+        # 1: Kidney
+        # 2: Tumor
+        # 3: Cyst
+        # Considering Background, Kidney, and Tumor for this expt, so 3 classes.
+
+        self.num_classes = 3
+        self.im_res = (im_res, im_res)  
         self.scale = scale
         self.threshold = threshold
 
@@ -55,15 +62,20 @@ class KiTS_Dataset(Dataset):
         #             if not file.startswith('.')]
         logging.info(f'Creating dataset with {len(self.file_list)} examples')
 
+    def np_one_hot(self, arr):
+
+        return np.eye(self.num_classes)[arr]
+
     def load_data(self):
 
         images, masks, eroded_masks, percs = list(), list(), list(), list()
 
         for filename in self.file_list:
-            # print(filename)
+            print("Filename: ", filename)
             img = self.load_image(filename)
-            mask = self.load_image_masks(filename)
-            eroded_mask = self.eroded_mask(filename) if self.threshold != 0 else mask
+            np_mask = self.load_image_mask_numpy(filename)
+            mask = self.load_image_mask(filename)
+            eroded_mask = self.eroded_mask(np_mask) if self.threshold != 0 else mask
             perc = self.get_perc(mask)
 
             images.append(img)
@@ -80,54 +92,55 @@ class KiTS_Dataset(Dataset):
             f'Either no image or multiple images found for the ID {filename}: {img_file}'
         T = np.load(img_file[0])
         T = torch.from_numpy(T)
-        # if T.mode != 'RGB':
-        #     T = T.convert(mode = 'RGB')
-        # T = self.preprocess(T, self.transform)
         return T
+
+    def load_image_mask_numpy(self, filename):
+
+        mask_file = glob(os.path.join(self.main_dir, 'gt_masks', filename + '*'))
+        assert len(mask_file) == 1, \
+            f'Either no image or multiple images found for the ID {filename}: {img_file}'
+            #Mask as torch Tensor
+        M = np.load(mask_file[0])
+
+        # Set edges to background class (ie 0) to ensure erosion works
+
+        M[0,:] = 0
+        M[-1,:] = 0
+        M[:,0] = 0
+        M[:,-1] = 0
+
+        return M
 
     def load_image_mask(self, filename):
 
-        mask_file = glob(os.path.join(self.main_dir, 'gt_masks', filename + '*'))
-        assert len(mask_file) == 1, \
-            f'Either no image or multiple images found for the ID {filename}: {img_file}'
-            #Mask as torch Tensor
-        M = np.load(mask_file[0])
-        # if M.mode != '1':
-        #     M = M.convert(mode = '1')
-        # M = self.preprocess_mask(M, self.transform)
-        # mask += M
-        M = torch.from_numpy(M)
-        # mask = torch.clamp(mask, max = 1.0)
-        return M
+        return self.preprocess_mask(self.load_image_mask_numpy(filename))
 
-    def eroded_mask(self, filename):
+    def eroded_mask(self, np_mask):
 
-        # o_pixels = np.sum(mask)
-        mask_file = glob(os.path.join(self.main_dir, 'gt_masks', filename + '*'))
-        assert len(mask_file) == 1, \
-            f'Either no image or multiple images found for the ID {filename}: {img_file}'
-            #Mask as torch Tensor
-        M = np.load(mask_file[0])
+        np_mask_oh = self.np_one_hot(np_mask)
+
+        er_mask = np.zeros(np_mask_oh.shape)
 
         #TODO: Code to erode the loaded mask
 
-        e_mask = mask
-        pixels = np.sum(e_mask)
-        if self.threshold < 1.0:
-            threshold = max(30, int(pixels * self.threshold))
-        else:
-            threshold = self.threshold
-        # print(threshold, pixels)
-        while pixels >= threshold:
-            e_mask_t = erosion(e_mask, np.ones((3,3)))
-            pixels = np.sum(e_mask_t)
+        for i in range(self.num_classes):
+            e_mask = np_mask[:,:,i]
+            pixels = np.sum(e_mask)
+            if self.threshold < 1.0:
+                threshold = max(30, int(pixels * self.threshold))
+            else:
+                threshold = self.threshold
+            # print(threshold, pixels)
+            while pixels >= threshold:
+                e_mask_t = erosion(e_mask, np.ones((3,3)))
+                pixels = np.sum(e_mask_t)
+                
+                if pixels != 0:
+                    e_mask = e_mask_t
+            er_mask[:,:,i] = e_mask
             
-            if pixels != 0:
-                e_mask = e_mask_t
-            
-        # print(pixels)
         
-        return torch.from_numpy(e_mask)
+        return torch.from_numpy(er_mask)
         # return e_mask
 
 
@@ -136,25 +149,10 @@ class KiTS_Dataset(Dataset):
 
     def get_perc(self, mask):
 
-        perc = torch.mean((mask == 1) * 1.0)
+        perc = torch.mean(mask, (0,1))
+        print(perc.size, perc)
 
-        return torch.unsqueeze(perc, 0)
-
-    def get_filenames(self, path):
-
-        file_list = list()
-
-        for i in os.listdir(os.path.join(path, 'benign')):
-            fname = i.split('.')[0]
-            if fname[-1] == ')':
-                file_list.append(f'benign/{fname}')
-
-        for i in os.listdir(os.path.join(path, 'malignant')):
-            fname = i.split('.')[0]
-            if fname[-1] == ')':
-                file_list.append(f'malignant/{fname}')
-
-        return file_list
+        return perc
 
     def get_all_slices_of_case(self, case_id):
 
@@ -168,6 +166,8 @@ class KiTS_Dataset(Dataset):
         return slices
 
     def get_filenames_from_file(self, path):
+
+        print("In function get_filenames_from_file")
 
         file_list = list()
 
@@ -186,16 +186,24 @@ class KiTS_Dataset(Dataset):
         random.shuffle(file_list)
         return file_list
 
-    def preprocess_mask(self, pil_mask, transform):
+    def preprocess_mask(self, np_mask):
 
-        pil_mask = pil_mask.resize(self.im_res)
+        # preProcess loaded segmentation mask as per the task, and return a torch tensor
 
-        imgM = transform(pil_mask)
-        # imgM -= 1
-        # imgM = (imgM > 0) * 1
+        imgM = np_mask
+
+        # Replace cysts annotations with kidney
+        imgM[imgM == 3] = 1
+
+        imgM = torch.from_numpy(imgM).long()
+        imgM = F.one_hot(imgM, num_classes = self.num_classes)
+
+        # Remove background
+        imgM = imgM[:,:,1:]
+
         return imgM
 
-    def preprocess(self, pil_img, transform):
+    def preprocess(self, np_img):
         w, h = pil_img.size
 
         pil_img = pil_img.resize(self.im_res)
@@ -236,7 +244,7 @@ class KiTS_Dataset(Dataset):
 
             idx = self.file_list[i]
             T = self.load_image(idx)
-            M = self.load_image_masks(idx)
+            M = self.load_image_mask(idx)
             Mc = self.eroded_image_masks(idx)
             P = self.get_perc(M)
 
