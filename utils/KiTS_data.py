@@ -109,6 +109,9 @@ class KiTS_Dataset(Dataset):
         M[:,0] = 0
         M[:,-1] = 0
 
+        # Replace cysts annotations with kidney
+        M[M == 3] = 1
+
         return M
 
     def load_image_mask(self, filename):
@@ -124,7 +127,7 @@ class KiTS_Dataset(Dataset):
         #TODO: Code to erode the loaded mask
 
         for i in range(self.num_classes):
-            e_mask = np_mask[:,:,i]
+            e_mask = np_mask_oh[:,:,i]
             pixels = np.sum(e_mask)
             if self.threshold < 1.0:
                 threshold = max(30, int(pixels * self.threshold))
@@ -149,7 +152,7 @@ class KiTS_Dataset(Dataset):
 
     def get_perc(self, mask):
 
-        perc = torch.mean(mask, (0,1))
+        perc = torch.mean(mask.float(), (0,1))
         print(perc.size, perc)
 
         return perc
@@ -191,9 +194,6 @@ class KiTS_Dataset(Dataset):
         # preProcess loaded segmentation mask as per the task, and return a torch tensor
 
         imgM = np_mask
-
-        # Replace cysts annotations with kidney
-        imgM[imgM == 3] = 1
 
         imgM = torch.from_numpy(imgM).long()
         imgM = F.one_hot(imgM, num_classes = self.num_classes)
