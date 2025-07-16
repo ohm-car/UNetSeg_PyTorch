@@ -21,7 +21,7 @@ from architectures.busi.unet_model_xB import UNet
 from torch.utils.tensorboard import SummaryWriter
 # from utils.pascalVOC_multiloss import PascalVOCDataset
 # from utils.petsReconDataset_multiloss_pl import PetsReconDataset
-from utils.BUSI_multiloss import BUSIDataset
+from utils.KiTS_data import KiTS_Dataset
 from utils.percLoss import percLoss
 from torch.utils.data import DataLoader, random_split
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
@@ -40,6 +40,7 @@ dir_checkpoint = None
 
 n_train = None
 n_val = None
+num_classes = None
 
 # def get_dataloaders(args,
 #                     val_percent=0.1):
@@ -70,9 +71,13 @@ def get_dataloaders(args,
 
     root_dir = args.rd
 
-    train = BUSIDataset(root_dir, file_list_path = 'train.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
-    val = BUSIDataset(root_dir, file_list_path = 'val.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
-    test = BUSIDataset(root_dir, file_list_path = 'test.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    train = KiTS_Dataset(root_dir, file_list_path = 'train.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    val = KiTS_Dataset(root_dir, file_list_path = 'val.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    test = KiTS_Dataset(root_dir, file_list_path = 'test.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+
+    global num_classes
+    num_classes = train.num_classes
+
     n_val = len(val)
     n_train = len(train)
     # train, val, test = random_split(dataset, [n_train, n_val, n_val])
@@ -107,7 +112,7 @@ def get_dataloaders(args,
 def get_model():
 
     # model = fcn_resnet50(aux_loss=True)
-    model = deeplabv3_resnet50(num_classes = 1, aux_loss=True)
+    model = deeplabv3_resnet50(num_classes = num_classes - 1, aux_loss=True)
     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
                  nn.ReLU(inplace=True),
@@ -199,7 +204,7 @@ def objective(trial,
     weak_mask_criterion = nn.BCELoss(reduction = 'sum')
     # weak_mask_criterion = nn.BCEWithLogitsLoss()
     
-    mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
+    mask_criterion = percLoss(regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
 
     save_iou_thresh = 0.4
@@ -380,6 +385,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     args = get_args()
     print(args)
+    print(KiTS_Dataset.num_classes)
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if args.device:
         device = torch.device(args.device)

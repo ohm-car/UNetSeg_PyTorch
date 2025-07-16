@@ -23,6 +23,15 @@ import random
 """A custom dataset loader object. This dataset returns the same labels as the input"""
 
 class KiTS_Dataset(Dataset):
+
+    # Class Labels:
+    # 0: Background
+    # 1: Kidney
+    # 2: Tumor
+    # 3: Cyst
+    # Considering Background, Kidney, and Tumor for this expt, so 3 classes.
+    num_classes = 3
+
     def __init__(self, root_dir, file_list_path = None, threshold = 100, im_res = 512, scale=1, preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/KiTS23_DL')
@@ -30,7 +39,7 @@ class KiTS_Dataset(Dataset):
         # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
         if file_list_path:
             tp_path = os.path.join(root_dir, 'UNetSeg_PyTorch/utils/KiTS_multiloss', file_list_path)
-            self.file_list = self.get_filenames_from_file(tp_path)[:100]
+            self.file_list = self.get_filenames_from_file(tp_path)[:20]
         else:
             raise Exception("Variable file_list_path required.")
         print("File List: ", self.file_list)
@@ -42,7 +51,8 @@ class KiTS_Dataset(Dataset):
         # 3: Cyst
         # Considering Background, Kidney, and Tumor for this expt, so 3 classes.
 
-        self.num_classes = 3
+        # self.num_classes = 30
+        # print("Classes: ", KiTS_Dataset.num_classes, self.num_classes)
         self.im_res = (im_res, im_res)  
         self.scale = scale
         self.threshold = threshold
@@ -71,7 +81,7 @@ class KiTS_Dataset(Dataset):
         images, masks, eroded_masks, percs = list(), list(), list(), list()
 
         for filename in self.file_list:
-            print("Filename: ", filename)
+            # print("Filename: ", filename)
             img = self.load_image(filename)
             np_mask = self.load_image_mask_numpy(filename)
             mask = self.load_image_mask(filename)
@@ -254,7 +264,7 @@ class KiTS_Dataset(Dataset):
             idx = self.file_list[i]
             T = self.load_image(idx)
             M = self.load_image_mask(idx)
-            Mc = self.eroded_image_masks(idx)
+            Mc = self.eroded_mask(idx)
             P = self.get_perc(M)
 
             return {

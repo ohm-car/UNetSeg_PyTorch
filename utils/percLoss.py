@@ -6,10 +6,9 @@ from torch.distributions.bernoulli import Bernoulli
 
 class percLoss(nn.Module):
 
-    def __init__(self, threshold_prob=0.9, num_classes=1, regularizer=None, regularizer_weight=0.1, sampler=None):
+    def __init__(self, num_classes=1, regularizer=None, regularizer_weight=0.1, sampler=None):
         super().__init__()
         # threshold_prob hopefully to be used later
-        self.threshold_prob = threshold_prob
 
         self.num_classes = num_classes
         self.rw = regularizer_weight
@@ -52,7 +51,7 @@ class percLoss(nn.Module):
         # perc = torch.sum(temp2)/torch.numel(temp2)
         # print(perc)
         # l1loss = nn.L1Loss(reduction='sum')
-        l1loss = nn.L1Loss()
+        l1loss = nn.L1Loss(reduction = 'sum')
         # reg_loss = self.omkar_regularize(pred_mask)
         # reg_loss = self.edward_regularize(pred_mask)
         # reg_loss = self.bc_entropy(pred_mask)
