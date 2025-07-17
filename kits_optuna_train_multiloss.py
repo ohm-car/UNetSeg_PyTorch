@@ -15,7 +15,7 @@ import torchsummary
 import datetime
 import optuna
 
-from busi_eval_multiloss import eval_net
+from kits_eval_multiloss import eval_net
 from architectures.busi.unet_model_xB import UNet
 
 from torch.utils.tensorboard import SummaryWriter
@@ -113,13 +113,30 @@ def get_model():
 
     # model = fcn_resnet50(aux_loss=True)
     model = deeplabv3_resnet50(num_classes = num_classes - 1, aux_loss=True)
+
+    # Access the backbone's first convolutional layer
+    original_conv1 = model.backbone.conv1
+
+    # Create a new convolutional layer with 1 input channel
+    # Use the same output channels, kernel size, stride, and padding as the original
+    new_conv1 = nn.Conv2d(
+        in_channels=1, 
+        out_channels=original_conv1.out_channels,
+        kernel_size=original_conv1.kernel_size,
+        stride=original_conv1.stride,
+        padding=original_conv1.padding,
+        bias=original_conv1.bias
+    )
+
     aux = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
                  nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
                  nn.ReLU(inplace=True),
                  nn.Dropout(p=0.1, inplace=False),
-                 nn.Conv2d(512, 3, kernel_size=(1, 1), stride=(1, 1)),
+                 nn.Conv2d(512, 1, kernel_size=(1, 1), stride=(1, 1)),
                  nn.Sigmoid())
     model.aux_classifier = aux
+    # Replace the original conv1 with the new one
+    model.backbone.conv1 = new_conv1
     model.classifier.append(nn.Sigmoid())
     model.to(device=device)
     return model
@@ -253,6 +270,7 @@ def objective(trial,
                 # print(torch.mean(torch.squeeze(pred_mask), (1,2)).shape, imgs_percs)
                 # pred_mask_sigmoid = F.sigmoid(pred_mask)
                 perc_loss = mask_criterion(pred_mask, imgs_percs)
+                # print(perc_loss)
                 # perc_loss = mask_criterion(pred_mask_sigmoid, imgs_percs)
                 # total_loss = loss + perc_loss
 
@@ -367,7 +385,7 @@ def get_args():
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=224,
                         help='Input Image resolution')
-    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=50.0,
+    parser.add_argument('-th', '--threshold', dest='threshold', type=float, default=500.0,
                         help='Weak Mask Pixel Threshold')
     parser.add_argument('-pl', '--preload', dest='preload', type=bool, default=False,
                         help='Whether to pre-load images. Typically saves time reading and writing from disk.')

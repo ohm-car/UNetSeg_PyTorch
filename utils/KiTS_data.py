@@ -35,14 +35,15 @@ class KiTS_Dataset(Dataset):
     def __init__(self, root_dir, file_list_path = None, threshold = 100, im_res = 512, scale=1, preload = False):
 
         self.main_dir = os.path.join(root_dir, 'Datasets/KiTS23_DL')
+        random.seed(0)
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
         if file_list_path:
             tp_path = os.path.join(root_dir, 'UNetSeg_PyTorch/utils/KiTS_multiloss', file_list_path)
-            self.file_list = self.get_filenames_from_file(tp_path)[:20]
+            self.file_list = self.get_filenames_from_file(tp_path)
         else:
             raise Exception("Variable file_list_path required.")
-        print("File List: ", self.file_list)
+        # print("File List: ", self.file_list)
 
         # Class Labels:
         # 0: Background
@@ -56,6 +57,8 @@ class KiTS_Dataset(Dataset):
         self.im_res = (im_res, im_res)  
         self.scale = scale
         self.threshold = threshold
+
+        self.resized_files = list()
 
         self.preload = preload
         self.transform = transforms.Compose([transforms.PILToTensor()])
@@ -81,7 +84,6 @@ class KiTS_Dataset(Dataset):
         images, masks, eroded_masks, percs = list(), list(), list(), list()
 
         for filename in self.file_list:
-            # print("Filename: ", filename)
             img = self.load_image(filename)
             np_mask = self.load_image_mask_numpy(filename)
             mask = self.load_image_mask(filename)
@@ -101,7 +103,17 @@ class KiTS_Dataset(Dataset):
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {filename}: {img_file}'
         T = np.load(img_file[0])
+
+        # Check image size
+        assert T.shape == (512, 512), \
+            f'Resize required for {img_file[0]}, shape {T.shape}'
+
+        # Rescaling to get this between 0 and 1
+        T = T + 1024
+        T = T / 4095
+
         T = torch.from_numpy(T)
+        T = torch.unsqueeze(T, dim=0)
         return T
 
     def load_image_mask_numpy(self, filename):
@@ -111,6 +123,10 @@ class KiTS_Dataset(Dataset):
             f'Either no image or multiple images found for the ID {filename}: {img_file}'
             #Mask as torch Tensor
         M = np.load(mask_file[0])
+
+        # Check image size
+        assert M.shape == (512, 512), \
+            f'Resize required for {img_file[0]}'
 
         # Set edges to background class (ie 0) to ensure erosion works
 
@@ -126,7 +142,10 @@ class KiTS_Dataset(Dataset):
 
     def load_image_mask(self, filename):
 
-        return self.preprocess_mask(self.load_image_mask_numpy(filename))
+        iM = self.preprocess_mask(self.load_image_mask_numpy(filename))
+        iM = iM.permute(2,0,1)
+
+        return iM
 
     def eroded_mask(self, np_mask):
 
@@ -158,8 +177,9 @@ class KiTS_Dataset(Dataset):
                     e_mask = e_mask_t
             er_mask[:,:,i] = e_mask
             
-        
-        return torch.from_numpy(er_mask)
+        eM = torch.from_numpy(er_mask)
+        eM = eM.permute(2,0,1)
+        return eM
         # return e_mask
 
 
@@ -168,8 +188,7 @@ class KiTS_Dataset(Dataset):
 
     def get_perc(self, mask):
 
-        perc = torch.mean(mask.float(), (0,1))
-        # print(perc.size(), perc)
+        perc = torch.mean(mask.float(), (1,2))
 
         return perc
 
@@ -186,7 +205,7 @@ class KiTS_Dataset(Dataset):
 
     def get_filenames_from_file(self, path):
 
-        print("In function get_filenames_from_file")
+        # print("In function get_filenames_from_file")
 
         file_list = list()
 
@@ -251,6 +270,8 @@ class KiTS_Dataset(Dataset):
             Mc = self.eroded_masks[i]
             P = self.percs[i]
 
+            # print(T.shape, M.shape, Mc.shape, P.shape)
+
             return {
                 'image_ID': idx,
                 'image': T,
@@ -264,8 +285,11 @@ class KiTS_Dataset(Dataset):
             idx = self.file_list[i]
             T = self.load_image(idx)
             M = self.load_image_mask(idx)
-            Mc = self.eroded_mask(idx)
+            _ = self.load_image_mask_numpy(idx)
+            Mc = self.eroded_mask(_)
             P = self.get_perc(M)
+
+            # print(T.shape, M.shape, Mc.shape, P.shape)
 
             return {
             'image_ID': idx,
