@@ -18,6 +18,7 @@ from skimage.morphology import square, erosion, binary_erosion
 from skimage.color import rgb2gray
 from skimage.io import imread
 from skimage.transform import resize
+import cv2
 import random
 
 """A custom dataset loader object. This dataset returns the same labels as the input"""
@@ -65,6 +66,7 @@ class KiTS_Dataset(Dataset):
         if self.preload:
             self.images, self.masks, self.eroded_masks, self.percs = self.load_data()
             logging.info(f'Loaded dataset with {len(self.file_list)} examples')
+            print(self.resized_files if len (self.resized_files) < 100 else len(self.resized_files))
 
         # transform = transforms.Compose([transforms.PILToTensor()])
         # self.percsDict = self.getPercsDict(percs_dir)
@@ -78,6 +80,14 @@ class KiTS_Dataset(Dataset):
     def np_one_hot(self, arr):
 
         return np.eye(self.num_classes)[arr]
+
+    def resize_img(self, img):
+        img = cv2.resize(img, self.im_res, interpolation = cv2.INTER_LINEAR)
+        return img
+
+    def resize_mask(self, mask):
+        mask = cv2.resize(mask, self.im_res, interpolation = cv2.INTER_LINEAR)
+        return mask
 
     def load_data(self):
 
@@ -105,8 +115,9 @@ class KiTS_Dataset(Dataset):
         T = np.load(img_file[0])
 
         # Check image size
-        assert T.shape == (512, 512), \
-            f'Resize required for {img_file[0]}, shape {T.shape}'
+        if T.shape != self.im_res:
+            T = self.resize_img(T)
+            self.resized_files.append(filename)
 
         # Rescaling to get this between 0 and 1
         T = T + 1024
@@ -125,8 +136,8 @@ class KiTS_Dataset(Dataset):
         M = np.load(mask_file[0])
 
         # Check image size
-        assert M.shape == (512, 512), \
-            f'Resize required for {img_file[0]}'
+        if M.shape != self.im_res:
+            M = self.resize_mask(M)
 
         # Set edges to background class (ie 0) to ensure erosion works
 
