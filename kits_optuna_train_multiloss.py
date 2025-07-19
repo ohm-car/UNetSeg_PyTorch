@@ -84,9 +84,9 @@ def get_dataloaders(args,
 
     # n_train = len(dataset)
 
-    train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True, num_workers = 2)
-    val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False, num_workers = 2)
-    test_loader = DataLoader(test, batch_size=args.batchsize, shuffle=True, num_workers = 2)
+    train_loader = DataLoader(train, batch_size=args.batchsize, shuffle=True)
+    val_loader = DataLoader(val, batch_size=args.batchsize, shuffle=False)
+    test_loader = DataLoader(test, batch_size=args.batchsize, shuffle=False)
 
     print("Loader lengths: ", len(train_loader), len(val_loader), len(test_loader))
 
@@ -166,9 +166,9 @@ def objective(trial,
     # print(dir_mask, type(dir_mask))
     # tm = datetime.datetime.now()
     if args.jobID:
-        dir_checkpoint = 'checkpoints/final_runs/busi/{}/'.format(args.jobID)
+        dir_checkpoint = 'checkpoints/final_runs/kits/{}/'.format(args.jobID)
     else:
-        dir_checkpoint = 'checkpoints/optuna/busi/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
+        dir_checkpoint = 'checkpoints/optuna/kits/multiloss/{:02d}-{:02d}/{:02d}-{:02d}/'.format(tm.month, tm.day, tm.hour, tm.minute)
     try:
         os.makedirs(dir_checkpoint, exist_ok=True)
         logging.info('Created checkpoint directory')
@@ -380,7 +380,8 @@ def get_args():
     parser.add_argument('-c', '--numClasses', metavar='C', type=int, default=1,
                         help='Number of classes in the dataset. If 1 or 2, use 1. Else use the number of classes.', dest='classes')
     parser.add_argument('-rd', '--rootDir', metavar='RD', type=str, default=Path().resolve().parent,
-                        help='Root Directory for dataset', dest='rd')
+                        help='Root Directory for dataset - change this to scratch dir when running on a cluster',
+                        dest='rd')
     parser.add_argument('-cp', '--save_cp', dest='savecp', type=bool, default=False,
                         help='Whether to checkpoint or not. If false, will supersede saveFreq.')
     parser.add_argument('-ir', '--imageRes', dest='im_res', type=int, default=512,

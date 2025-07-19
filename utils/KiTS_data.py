@@ -40,7 +40,7 @@ class KiTS_Dataset(Dataset):
         # self.imgs_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/JPEGImages/')
         # self.masks_dir = os.path.join(root_dir, 'Datasets/VOCdevkit/VOC2012/SegmentationClass/')
         if file_list_path:
-            tp_path = os.path.join(root_dir, 'UNetSeg_PyTorch/utils/KiTS_multiloss', file_list_path)
+            tp_path = os.path.join(root_dir, 'Datasets/KiTS23_DL/KiTS_multiloss', file_list_path)
             self.file_list = self.get_filenames_from_file(tp_path)
         else:
             raise Exception("Variable file_list_path required.")
