@@ -62,7 +62,7 @@ class percLoss(nn.Module):
 
         loss = l1loss(pred_perc, target)
 
-        # print("Loss:", loss)
+        print("Loss:", loss)
 
         return loss + reg
 
