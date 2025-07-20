@@ -42,10 +42,10 @@ class percLoss(nn.Module):
         # print("Unsqueezed_Pred_Perc:", pred_perc)
 
         pred_perc = torch.mean(pred_mask, axis=(2,3))
-        # print("Pred_Perc:", pred_perc)
-        # print("Target:", target)
+        print("Pred_Perc:", pred_perc)
+        print("Target:", target)
 
-        # print("Pred_Perc_Size:", pred_perc.size(), "Target_Size:", target.size())
+        print("Pred_Perc_Size:", pred_perc.size(), "Target_Size:", target.size())
 
         # print(temp2)
         # perc = torch.sum(temp2)/torch.numel(temp2)
