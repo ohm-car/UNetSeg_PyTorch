@@ -188,7 +188,8 @@ def objective(trial,
     # HyperParams: Loss weights, regularizer_weight, lr, regularizer, optimizer
 
     weight_recon_loss = trial.suggest_float("rec_loss_weight", 1e-1, 1, log=False)
-    regularizer = trial.suggest_categorical("regularizing_fn", ["omkar", "edward", "bce"])
+    # regularizer = trial.suggest_categorical("regularizing_fn", ["omkar", "edward", "bce"])
+    regularizer = 'edward'
     lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
