@@ -397,6 +397,8 @@ def get_args():
                         help='SLURM job id', dest='jobID')
     parser.add_argument('-m', '--mode', metavar='M', type=str, default='default',
                         help='Mode of training - default, or perc_loss_only, or weak_mask_only', dest='mode')
+    parser.add_argument('-nt', '--num_trials', metavar='NT', type=int, default=60,
+                        help='Number of optuna trials', dest='num_trials')
 
     return parser.parse_args()
 
@@ -467,7 +469,7 @@ if __name__ == '__main__':
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
-                                                save_freq = args.saveFreq), n_trials = 60)
+                                                save_freq = args.saveFreq), n_trials = args.num_trials)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
