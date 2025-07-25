@@ -33,7 +33,6 @@ source activate unet
 
 th=(0 0.04 0.08 0.12 0.16 0.2 256 256)
 md=('perc_loss_only' 'default' 'default' 'default' 'default' 'default' 'default' 'weak_mask_only')
-echo "The threshold is: ${th[1]}"
 echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
 echo "The mode is: ${md[$SLURM_ARRAY_TASK_ID]}"
 concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"

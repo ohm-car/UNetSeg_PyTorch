@@ -225,7 +225,7 @@ def objective(trial,
     mask_criterion = percLoss(regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
 
-    save_iou_thresh = 0.4
+    save_iou_thresh = 0.225
 
     for epoch in range(epochs):
         net.train()
