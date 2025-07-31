@@ -5,7 +5,7 @@
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
-#SBATCH --constraint=L40S
+#SBATCH --constraint=[L40S,RTX_8000]
 #SBATCH --output=outfiles/final/kits/output_%j.log
 #SBATCH --error=outfiles/final/kits/output_%j.err
 
@@ -36,7 +36,7 @@ source activate unet
 # concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 # echo "Concatenated ID: $concatenated_id"
 
-python /umbc/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/kits_optuna_train_seg.py -pl=False -e=80 -b=20 -th=0 -j=$SLURM_JOBID
+python /umbc/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/kits_optuna_train_seg.py -pl=False -e=80 -b=20 -th=0 -j=$SLURM_JOBID -nt=3
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
