@@ -71,9 +71,9 @@ def get_dataloaders(args,
 
     root_dir = args.rd
 
-    train = KiTS_Dataset(root_dir, file_list_path = 'train.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
-    val = KiTS_Dataset(root_dir, file_list_path = 'val.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
-    test = KiTS_Dataset(root_dir, file_list_path = 'test.txt', im_res = args.im_res, threshold = args.threshold, preload = args.preload)
+    train = KiTS_Dataset(root_dir, file_list_path = 'train.txt', im_res = args.im_res, threshold = 0, preload = args.preload)
+    val = KiTS_Dataset(root_dir, file_list_path = 'val.txt', im_res = args.im_res, threshold = 0, preload = args.preload)
+    test = KiTS_Dataset(root_dir, file_list_path = 'test.txt', im_res = args.im_res, threshold = 0, preload = args.preload)
 
     global num_classes
     num_classes = train.num_classes
@@ -219,13 +219,13 @@ def objective(trial,
     recon_criterion = nn.L1Loss()
 
     # Loss criterion for weak mask
-    weak_mask_criterion = nn.BCELoss(reduction = 'sum')
+    weak_mask_criterion = nn.BCELoss(reduction = 'mean')
     # weak_mask_criterion = nn.BCEWithLogitsLoss()
     
     mask_criterion = percLoss(regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
 
-    save_iou_thresh = 0.225
+    save_iou_thresh = 0.40
 
     for epoch in range(epochs):
         net.train()
@@ -263,7 +263,7 @@ def objective(trial,
 
                 # BCEWithLogitsLoss for partial masks
 
-                weak_pred_mask = pred_mask * weak_mask
+                weak_pred_mask = pred_mask
                 weak_loss = weak_mask_criterion(weak_pred_mask, weak_mask)
 
                 loss = weight_recon_loss * recon_criterion(pred_recon_img, recon_img)
@@ -280,7 +280,7 @@ def objective(trial,
                 elif args.mode == 'weak_mask_only':
                     total_loss = loss + weak_loss
                 else:
-                    total_loss = loss + perc_loss + weak_loss
+                    total_loss = weak_loss
 
                 # total_loss = loss + perc_loss + weak_loss
                 # total_loss = loss + weak_loss

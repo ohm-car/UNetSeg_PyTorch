@@ -1,15 +1,13 @@
 #!/bin/bash
 
 #SBATCH --job-name=busi_mlrseg
-#SBATCH --array=0-7
 #SBATCH --mail-user=omkark1@umbc.edu
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --nodelist=g04
 #SBATCH --time=10-12:00:00
-#SBATCH --constraint=rtx_6000
-#SBATCH --output=outfiles/final/busi/output_%A_%a.log
-#SBATCH --error=outfiles/final/busi/output_%A_%a.err
+#SBATCH --constraint=L40S
+#SBATCH --output=outfiles/final/kits/output_%j.log
+#SBATCH --error=outfiles/final/kits/output_%j.err
 
 DT=`date +"%m-%d_%H-%M"`
 
@@ -32,13 +30,13 @@ source activate unet
 # 	echo "Nothin"
 # fi
 
-th=(0 0.04 0.08 0.12 0.16 0.2 50 50)
-echo "The threshold is: ${th[1]}"
-echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
-concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
-echo "Concatenated ID: $concatenated_id"
+# th=(0 0.04 0.08 0.12 0.16 0.2 50 50)
+# echo "The threshold is: ${th[1]}"
+# echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
+# concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
+# echo "Concatenated ID: $concatenated_id"
 
-# python /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/busi_optuna_train_multiloss.py -pl=True -e=160 -b=32 -ir=224 -th=${th[$SLURM_ARRAY_TASK_ID]} -j=$concatenated_id
+python /umbc/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/kits_optuna_train_seg.py -pl=False -e=80 -b=20 -th=0 -j=$SLURM_JOBID
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
