@@ -5,7 +5,7 @@
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
-#SBATCH --constraint=[L40S,RTX_8000]
+#SBATCH --constraint=[L40S|RTX_8000]
 #SBATCH --output=outfiles/final/kits/output_%j.log
 #SBATCH --error=outfiles/final/kits/output_%j.err
 
