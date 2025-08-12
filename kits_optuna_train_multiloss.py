@@ -195,8 +195,15 @@ def objective(trial,
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
     regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
+    #Temporary code to work with repeat expts - REVERT THIS COMMIT LATER
+    weight_recon_loss = 0.38626282029275105
+    lr = 1.0192434590500851e-05
+    optimizer_name = "RMSprop"
+    optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
+    regularizer_weight = 0.9941153463172587
+
     # writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
-    writer = SummaryWriter(comment=f'JobID_{args.jobID}_Trial_{trial.number}_SCALE_{img_scale}')
+    writer = SummaryWriter(comment=f'JobID_{args.jobID}_Trial_{trial.number}')
     global_step = 0
 
     logging.info(f'''Starting training:
