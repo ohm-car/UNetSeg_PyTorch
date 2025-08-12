@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=busi_mlrseg
-#SBATCH --array=0-7
+#SBATCH --array=0-4
 #SBATCH --mail-user=omkark1@umbc.edu
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
@@ -23,6 +23,8 @@ source activate unet
 
 # echo "The threshold is: $th"
 
+# REVERT this later back to commit b4da8a8
+
 # if [[ "$SLURM_ARRAY_TASK_ID" -eq 6 ]]; then
 # 	th=50
 # elif [[ "$SLURM_ARRAY_TASK_ID" -eq 7 ]]; then
@@ -33,12 +35,12 @@ source activate unet
 
 th=(0 0.04 0.08 0.12 0.16 0.2 256 256)
 md=('perc_loss_only' 'default' 'default' 'default' 'default' 'default' 'default' 'weak_mask_only')
-echo "The threshold is: ${th[$SLURM_ARRAY_TASK_ID]}"
-echo "The mode is: ${md[$SLURM_ARRAY_TASK_ID]}"
+echo "The threshold is: ${th[2]}"
+echo "The mode is: ${md[2]}"
 concatenated_id="${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 echo "Concatenated ID: $concatenated_id"
 
-python /umbc/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/kits_optuna_train_multiloss.py -pl=True -e=80 -b=20 -th=${th[$SLURM_ARRAY_TASK_ID]} -j=$concatenated_id -m=${md[$SLURM_ARRAY_TASK_ID]}
+python /umbc/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/kits_optuna_train_multiloss.py -pl=True -e=80 -b=20 -th=${th[2]} -j=$concatenated_id -m=${md[2]}
 # mv output_$SLURM_JOBID.log /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.log
 # mv output_$SLURM_JOBID.err /nfs/ada/oates/users/omkark1/Thesis_Work/UNetSeg_PyTorch/outfiles/busi/optuna/output_$DT.err
 
