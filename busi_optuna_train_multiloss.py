@@ -172,6 +172,13 @@ def objective(trial,
     optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
     regularizer_weight = trial.suggest_float("reg_weight", 5e-2, 1, log=False)
 
+    #Temporary code to work with repeat expts - REVERT THIS COMMIT LATER
+    weight_recon_loss = 0.31656542275127775
+    lr = 3.2584119694078954e-05
+    optimizer_name = "RMSprop"
+    optimizer = getattr(optim, optimizer_name)(net.parameters(), lr=lr)
+    regularizer_weight = 0.7162326479772112
+
     # writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     writer = SummaryWriter(comment=f'JobID_{args.jobID}_Trial_{trial.number}_SCALE_{img_scale}')
     global_step = 0
@@ -199,7 +206,7 @@ def objective(trial,
     weak_mask_criterion = nn.BCELoss(reduction = 'sum')
     # weak_mask_criterion = nn.BCEWithLogitsLoss()
     
-    mask_criterion = percLoss(threshold_prob = 0.9, regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
+    mask_criterion = percLoss(regularizer = regularizer, regularizer_weight = regularizer_weight, sampler = args.sp)
     # weight_recon_loss, weight_percLoss = 1, 5
 
     save_iou_thresh = 0.4
@@ -372,6 +379,8 @@ def get_args():
                         help='SLURM job id', dest='jobID')
     parser.add_argument('-m', '--mode', metavar='M', type=str, default='default',
                         help='Mode of training - default, or perc_loss_only, or weak_mask_only', dest='mode')
+    parser.add_argument('-nt', '--num_trials', metavar='NT', type=int, default=60,
+                        help='Number of optuna trials', dest='num_trials')
 
     return parser.parse_args()
 
@@ -441,7 +450,7 @@ if __name__ == '__main__':
                                                 img_scale=args.scale,
                                                 val_percent=args.val / 100,
                                                 save_cp = args.savecp,
-                                                save_freq = args.saveFreq), n_trials = 60)
+                                                save_freq = args.saveFreq), n_trials = args.num_trials)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
