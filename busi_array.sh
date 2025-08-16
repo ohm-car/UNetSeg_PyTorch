@@ -6,7 +6,7 @@
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
 #SBATCH --time=10-12:00:00
-#SBATCH --constraint=RTX_2080Ti
+#SBATCH --constraint=RTX_2080TI
 #SBATCH --output=outfiles/final/busi/output_%A_%a.log
 #SBATCH --error=outfiles/final/busi/output_%A_%a.err
 
