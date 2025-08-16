@@ -46,7 +46,7 @@ def eval_net(net, loader, device, regularizer, epoch):
             if True:
                 seg_loss_batch = F.l1_loss(pred_imgs, recon_imgs).item()
                 # seg_loss_batch = F.cross_entropy(pred_masks, true_masks).item()
-                pcLossCriterion = percLoss(threshold_prob = 0.9, regularizer = regularizer)
+                pcLossCriterion = percLoss(regularizer = regularizer)
                 mask_loss_batch = pcLossCriterion(pred_masks, true_perc).item()
 
                 # mean_batch_iou = 0
